@@ -17,7 +17,19 @@ fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
 }
 
+fn hit_sphere(center: Point3, radius: f64, r: Ray) -> bool {
+    let oc = r.origin() - center;
+    let a = r.direction() * r.direction();
+    let b = 2. * (oc * r.direction());
+    let c = oc * oc - radius * radius;
+    let discriminant = b * b - 4. * a * c;
+    discriminant > 0.
+}
+
 fn ray_color(r: Ray) -> Color3 {
+    if hit_sphere(Point3::new(0., 0., -1.), 0.5, r) {
+        return Color3::new(1., 0., 0.);
+    }
     let unit_direction = r.direction().unit();
     let t: f64 = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Color3::ones() + t * Color3::new(0.5, 0.7, 1.0)

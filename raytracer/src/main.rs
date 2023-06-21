@@ -3,6 +3,7 @@ mod hittable;
 mod ray;
 mod sphere;
 mod vec3;
+mod hittable_list;
 
 use color::write_color;
 use image::{ImageBuffer, RgbImage};

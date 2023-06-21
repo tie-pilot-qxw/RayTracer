@@ -17,18 +17,24 @@ fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
 }
 
-fn hit_sphere(center: Point3, radius: f64, r: Ray) -> bool {
+fn hit_sphere(center: Point3, radius: f64, r: Ray) -> f64 {
     let oc = r.origin() - center;
-    let a = r.direction() * r.direction();
-    let b = 2. * (oc * r.direction());
-    let c = oc * oc - radius * radius;
-    let discriminant = b * b - 4. * a * c;
-    discriminant > 0.
+    let a = r.direction().squared_length();
+    let half_b = oc * r.direction();
+    let c = oc.squared_length() - radius * radius;
+    let discriminant = half_b * half_b - a * c;
+    if discriminant < 0. {
+        -1.0
+    } else {
+        (-half_b - discriminant.sqrt()) / a
+    }
 }
 
 fn ray_color(r: Ray) -> Color3 {
-    if hit_sphere(Point3::new(0., 0., -1.), 0.5, r) {
-        return Color3::new(1., 0., 0.);
+    let t = hit_sphere(Point3::new(0., 0., -1.), 0.5, r);
+    if t > 0.0 {
+        let n = (r.at(t) - Vec3::new(0., 0., -1.)).unit();
+        return 0.5 * Color3::new(n.x() + 1., n.y() + 1., n.z() + 1.);
     }
     let unit_direction = r.direction().unit();
     let t: f64 = 0.5 * (unit_direction.y() + 1.0);
@@ -42,7 +48,7 @@ fn main() {
     println!("CI: {}", is_ci);
 
     let aspect_ratio: f64 = 16.0 / 9.0;
-    let width: usize = 1600;
+    let width: usize = 800;
     let height: usize = (width as f64 / aspect_ratio) as usize;
     let path = "output/test.jpg";
     let quality = 60; // From 0 to 100, suggested value: 60

@@ -185,7 +185,7 @@ impl Div<f64> for Vec3 {
     type Output = Vec3;
 
     fn div(self, rhs: f64) -> Self {
-        (1.0 as f64) / rhs * self
+        (1.0_f64) / rhs * self
     }
 }
 
@@ -329,7 +329,7 @@ mod tests {
     fn test_length() {
         assert_eq!(
             Vec3::new(3.0, 4.0, 5.0).length(),
-            ((3.0 * 3.0 + 4.0 * 4.0 + 5.0 * 5.0) as f64).sqrt()
+            (3.0 * 3.0 + 4.0 * 4.0 + 5.0 * 5.0_f64).sqrt()
         );
     }
     #[test]

@@ -1,11 +1,14 @@
 mod color;
 mod vec3;
+mod ray;
 
 use color::write_color;
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use std::fs::File;
 pub use vec3::Vec3;
+pub type Point3 = Vec3;
+pub type Color3 = Vec3;
 
 const AUTHOR: &str = "Xinwei Qiang";
 

@@ -1,6 +1,6 @@
 mod color;
-mod vec3;
 mod ray;
+mod vec3;
 
 use color::write_color;
 use image::{ImageBuffer, RgbImage};
@@ -9,11 +9,18 @@ use std::fs::File;
 pub use vec3::Vec3;
 pub type Point3 = Vec3;
 pub type Color3 = Vec3;
+use ray::Ray;
 
 const AUTHOR: &str = "Xinwei Qiang";
 
 fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
+}
+
+fn ray_color(r: Ray) -> Color3 {
+    let unit_direction = r.direction().unit();
+    let t: f64 = 0.5 * (unit_direction.y() + 1.0);
+    (1.0 - t) * Color3::ones() + t * Color3::new(0.5, 0.7, 1.0)
 }
 
 fn main() {
@@ -22,13 +29,25 @@ fn main() {
 
     println!("CI: {}", is_ci);
 
-    let height: usize = 800;
-    let width: usize = 800;
+    let aspect_ratio: f64 = 16.0 / 9.0;
+    let width: usize = 1600;
+    let height: usize = (width as f64 / aspect_ratio) as usize;
     let path = "output/test.jpg";
     let quality = 60; // From 0 to 100, suggested value: 60
 
     // Create image data
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
+
+    //Create camera
+    let viewport_height: f64 = 2.0;
+    let viewport_width: f64 = aspect_ratio * viewport_height;
+    let focal_length: f64 = 1.0;
+
+    let origin = Point3::zero();
+    let horizontal = Vec3::new(viewport_width, 0., 0.);
+    let vertical = Vec3::new(0., viewport_height, 0.);
+    let lower_left_corner =
+        origin - horizontal / 2.0 - vertical / 2.0 - Vec3::new(0., 0., focal_length);
 
     // Progress bar UI powered by library `indicatif`
     // You can use indicatif::ProgressStyle to make it more beautiful
@@ -41,10 +60,17 @@ fn main() {
 
     for j in 0..height {
         for i in 0..width {
+            let u = i as f64 / (width - 1) as f64;
+            let v = j as f64 / (height - 1) as f64;
+            let r = Ray::new(
+                origin,
+                lower_left_corner + u * horizontal + v * vertical - origin,
+            );
+            let color = ray_color(r);
             let pixel_color = [
-                (j as f32 / height as f32 * 255.).floor() as u8,
-                ((i + height - j) as f32 / (height + width) as f32 * 255.).floor() as u8,
-                (i as f32 / height as f32 * 255.).floor() as u8,
+                (color.x() * 255.).floor() as u8,
+                (color.y() * 255.).floor() as u8,
+                (color.z() * 255.).floor() as u8,
             ];
             write_color(pixel_color, &mut img, i, height - j - 1);
             bar.inc(1);

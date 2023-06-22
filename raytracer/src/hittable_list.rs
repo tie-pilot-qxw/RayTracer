@@ -1,6 +1,6 @@
-use crate::hittable::{Hittable, HitRecord};
+use crate::hittable::{HitRecord, Hittable};
 
-struct HittableList {
+pub struct HittableList {
     objects: Vec<Box<dyn Hittable>>,
 }
 
@@ -9,20 +9,20 @@ impl HittableList {
         self.objects.push(object);
     }
 
-    pub fn new(object: Box<dyn Hittable>) -> Self {
+    pub fn new() -> Self {
         HittableList {
-            objects: vec![object],
+            objects: Vec::new(),
         }
     }
 
     pub fn clear(&mut self) {
-        self.clear();
+        self.objects.clear();
     }
 }
 
 impl Hittable for HittableList {
     fn hit(&self, r: crate::ray::Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
-        let mut hit_anything  = false;
+        let mut hit_anything = false;
         let mut temp_rec = HitRecord::new();
         let mut closest_so_far = t_max;
         for object in &self.objects {

@@ -86,8 +86,8 @@ fn main() {
 
     let material_ground = Arc::new(Lambertian::new(Color3::new(0.8, 0.8, 0.0)));
     let material_center = Arc::new(Lambertian::new(Color3::new(0.7, 0.3, 0.3)));
-    let material_left = Arc::new(Metal::new(Color3::new(0.8, 0.8, 0.8)));
-    let material_right = Arc::new(Metal::new(Color3::new(0.8, 0.6, 0.2)));
+    let material_left = Arc::new(Metal::new(Color3::new(0.8, 0.8, 0.8), 0.3));
+    let material_right = Arc::new(Metal::new(Color3::new(0.8, 0.6, 0.2), 1.0));
 
     world.add(Box::new(Sphere::new(
         Point3::new(0., -100.5, -1.),

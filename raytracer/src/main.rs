@@ -2,6 +2,7 @@ mod camera;
 mod color;
 mod hittable;
 mod hittable_list;
+mod material;
 mod ray;
 mod rtweekend;
 mod sphere;
@@ -11,7 +12,7 @@ use color::write_color;
 use hittable::{HitRecord, Hittable};
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
-use std::fs::File;
+use std::{fs::File, sync::Arc};
 pub use vec3::Vec3;
 pub type Point3 = Vec3;
 pub type Color3 = Vec3;
@@ -19,7 +20,12 @@ use hittable_list::HittableList;
 use ray::Ray;
 use std::f64::INFINITY;
 
-use crate::{camera::Camera, rtweekend::random_double_unit, sphere::Sphere};
+use crate::{
+    camera::Camera,
+    material::{Lambertian, Metal},
+    rtweekend::random_double_unit,
+    sphere::Sphere,
+};
 
 const AUTHOR: &str = "Xinwei Qiang";
 
@@ -34,10 +40,21 @@ fn ray_color(r: Ray, world: &impl Hittable, depth: isize) -> Color3 {
         return Color3::new(0., 0., 0.);
     }
 
-    if world.hit(r, 0., INFINITY, &mut rec) {
-        let target = rec.p + rec.normal + Vec3::random_in_unit_sphere();
-        return 0.5 * ray_color(Ray::new(rec.p, target - rec.p), world, depth - 1);
+    if world.hit(r, 0.000001, INFINITY, &mut rec) {
+        let mut scattered = Ray::new(Vec3::zero(), Vec3::zero());
+        let mut attenuation = Color3::zero();
+        if rec
+            .mat_ptr
+            .clone()
+            .unwrap()
+            .scatter(&r, &rec, &mut attenuation, &mut scattered)
+        {
+            return Vec3::elemul(attenuation, ray_color(scattered, world, depth - 1));
+        } else {
+            return Color3::zero();
+        }
     }
+
     let unit_direction = r.direction().unit();
     let t: f64 = 0.5 * (unit_direction.y() + 1.0);
     (1.0 - t) * Color3::ones() + t * Color3::new(0.5, 0.7, 1.0)
@@ -66,8 +83,32 @@ fn main() {
 
     //World
     let mut world = HittableList::new();
-    world.add(Box::new(Sphere::new(Point3::new(0., 0., -1.), 0.5)));
-    world.add(Box::new(Sphere::new(Point3::new(0., -100.5, -1.), 100.)));
+
+    let material_ground = Arc::new(Lambertian::new(Color3::new(0.8, 0.8, 0.0)));
+    let material_center = Arc::new(Lambertian::new(Color3::new(0.7, 0.3, 0.3)));
+    let material_left = Arc::new(Metal::new(Color3::new(0.8, 0.8, 0.8)));
+    let material_right = Arc::new(Metal::new(Color3::new(0.8, 0.6, 0.2)));
+
+    world.add(Box::new(Sphere::new(
+        Point3::new(0., -100.5, -1.),
+        100.,
+        material_ground,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(0., 0., -1.),
+        0.5,
+        material_center,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(-1., 0., -1.),
+        0.5,
+        material_left,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(1., 0., -1.),
+        0.5,
+        material_right,
+    )));
 
     // Progress bar UI powered by library `indicatif`
     // You can use indicatif::ProgressStyle to make it more beautiful
@@ -94,6 +135,8 @@ fn main() {
 
     // Finish progress bar
     bar.finish();
+
+    world.clear();
 
     // Output image to file
     println!("Ouput image as \"{}\"\n Author: {}", path, AUTHOR);

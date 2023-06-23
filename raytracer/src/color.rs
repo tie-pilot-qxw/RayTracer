@@ -12,9 +12,9 @@ pub fn write_color(
     //Divide the color by the number of samples.
     let scale = 1. / samples_per_pixel as f64;
     color *= scale;
-    let r = color.x();
-    let g = color.y();
-    let b = color.z();
+    let r = color.x().powf(0.5);
+    let g = color.y().powf(0.5);
+    let b = color.z().powf(0.5);
 
     let pixel_color = [
         (clamp(r, 0., 0.999) * 256.).floor() as u8,

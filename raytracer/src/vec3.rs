@@ -87,6 +87,28 @@ impl Vec3 {
             return p;
         }
     }
+
+    pub fn random_unit_vector() -> Self {
+        Self::random_in_unit_sphere().unit()
+    }
+
+    pub fn random_in_hemisphere(normal: Vec3) -> Vec3 {
+        let in_unit_sphere = Self::random_in_unit_sphere();
+        if in_unit_sphere * normal > 0. {
+            in_unit_sphere
+        } else {
+            -in_unit_sphere
+        }
+    }
+
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        (self.x.abs() < s) && (self.y.abs() < s) && (self.z.abs() < s)
+    }
+
+    pub fn reflect(v: Vec3, n: Vec3) -> Self {
+        v - 2. * (v * n) * n
+    }
 }
 
 impl Div<f64> for &Vec3 {

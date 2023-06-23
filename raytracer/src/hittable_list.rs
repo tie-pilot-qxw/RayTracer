@@ -30,6 +30,7 @@ impl Hittable for HittableList {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
                 *rec = temp_rec;
+                temp_rec = HitRecord::new();
             }
         }
 

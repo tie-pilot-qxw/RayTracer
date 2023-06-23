@@ -78,10 +78,24 @@ fn main() {
     // Create image data
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
 
-    //Create camera
-    let cam = Camera::new();
-
     //World
+    /*
+    let R = (PI / 4.).cos();
+    let mut world = HittableList::new();
+    let material_left = Arc::new(Lambertian::new(Color3::new(0., 0., 1.)));
+    let material_right = Arc::new(Lambertian::new(Color3::new(1., 0., 0.)));
+
+    world.add(Box::new(Sphere::new(
+        Point3::new(-R, 0., -1.),
+        R,
+        material_left,
+    )));
+    world.add(Box::new(Sphere::new(
+        Point3::new(R, 0., -1.),
+        R,
+        material_right,
+    )));*/
+
     let mut world = HittableList::new();
 
     let material_ground = Arc::new(Lambertian::new(Color3::new(0.8, 0.8, 0.0)));
@@ -94,12 +108,12 @@ fn main() {
     world.add(Box::new(Sphere::new(
         Point3::new(0., -100.5, -1.),
         100.,
-        material_ground.clone(),
+        material_ground,
     )));
     world.add(Box::new(Sphere::new(
         Point3::new(0., 0., -1.),
         0.5,
-        material_center.clone(),
+        material_center,
     )));
     world.add(Box::new(Sphere::new(
         Point3::new(-1., 0., -1.),
@@ -109,13 +123,22 @@ fn main() {
     world.add(Box::new(Sphere::new(
         Point3::new(-1., 0., -1.),
         -0.4,
-        material_left.clone(),
+        material_left,
     )));
     world.add(Box::new(Sphere::new(
         Point3::new(1., 0., -1.),
         0.5,
-        material_right.clone(),
+        material_right,
     )));
+
+    //Create camera
+    let cam = Camera::new(
+        Point3::new(-2., 2., 1.),
+        Point3::new(0., 0., -1.),
+        Vec3::new(0., 1., 0.),
+        20.,
+        aspect_ratio,
+    );
 
     // Progress bar UI powered by library `indicatif`
     // You can use indicatif::ProgressStyle to make it more beautiful

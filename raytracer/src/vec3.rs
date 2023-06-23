@@ -109,6 +109,13 @@ impl Vec3 {
     pub fn reflect(v: Vec3, n: Vec3) -> Self {
         v - 2. * (v * n) * n
     }
+
+    pub fn refract(uv: Vec3, n: Vec3, etai_over_etat: f64) -> Vec3 {
+        let cos_theta = ((-uv) * n).min(1.);
+        let r_out_prep = etai_over_etat * (uv + cos_theta * n);
+        let r_out_parallel = -((1. - r_out_prep.squared_length()).abs()).sqrt() * n;
+        r_out_parallel + r_out_prep
+    }
 }
 
 impl Div<f64> for &Vec3 {

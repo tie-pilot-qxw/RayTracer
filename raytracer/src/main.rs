@@ -11,7 +11,6 @@ use color::write_color;
 use hittable::{HitRecord, Hittable};
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
-use rand::Rng;
 use std::fs::File;
 pub use vec3::Vec3;
 pub type Point3 = Vec3;
@@ -20,7 +19,7 @@ use hittable_list::HittableList;
 use ray::Ray;
 use std::f64::INFINITY;
 
-use crate::{camera::Camera, sphere::Sphere};
+use crate::{camera::Camera, rtweekend::random_double_unit, sphere::Sphere};
 
 const AUTHOR: &str = "Xinwei Qiang";
 
@@ -28,11 +27,16 @@ fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
 }
 
-fn ray_color(r: Ray, world: &impl Hittable) -> Color3 {
+fn ray_color(r: Ray, world: &impl Hittable, depth: isize) -> Color3 {
     let mut rec = HitRecord::new();
 
+    if depth <= 0 {
+        return Color3::new(0., 0., 0.);
+    }
+
     if world.hit(r, 0., INFINITY, &mut rec) {
-        return 0.5 * (rec.normal + Color3::new(1., 1., 1.));
+        let target = rec.p + rec.normal + Vec3::random_in_unit_sphere();
+        return 0.5 * ray_color(Ray::new(rec.p, target - rec.p), world, depth - 1);
     }
     let unit_direction = r.direction().unit();
     let t: f64 = 0.5 * (unit_direction.y() + 1.0);
@@ -45,9 +49,6 @@ fn main() {
 
     println!("CI: {}", is_ci);
 
-    //Rand number generator
-    let mut rng = rand::thread_rng();
-
     //Image
     let aspect_ratio: f64 = 16.0 / 9.0;
     let width: usize = 800;
@@ -55,6 +56,7 @@ fn main() {
     let path = "output/test.jpg";
     let quality = 60; // From 0 to 100, suggested value: 60
     let samples_per_pixel: usize = 100;
+    let max_depth = 50;
 
     // Create image data
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
@@ -80,10 +82,10 @@ fn main() {
         for i in 0..width {
             let mut color = Color3::zero();
             for _s in 0..samples_per_pixel {
-                let u = (i as f64 + rng.gen_range(0.0..1.0)) / (width - 1) as f64;
-                let v = (j as f64 + rng.gen_range(0.0..1.0)) / (height - 1) as f64;
+                let u = (i as f64 + random_double_unit()) / (width - 1) as f64;
+                let v = (j as f64 + random_double_unit()) / (height - 1) as f64;
                 let r = cam.get_ray(u, v);
-                color += ray_color(r, &world);
+                color += ray_color(r, &world, max_depth);
             }
             write_color(color, samples_per_pixel, &mut img, i, height - j - 1);
             bar.inc(1);

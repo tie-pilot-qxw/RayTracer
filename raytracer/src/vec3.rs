@@ -1,5 +1,7 @@
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
+use crate::rtweekend::{random_double, random_double_unit};
+
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub struct Vec3 {
     x: f64,
@@ -58,6 +60,32 @@ impl Vec3 {
             panic!("Vector length is zero!");
         }
         self / self.length()
+    }
+
+    pub fn random(min: f64, max: f64) -> Self {
+        Self {
+            x: random_double(min, max),
+            y: random_double(min, max),
+            z: random_double(min, max),
+        }
+    }
+
+    pub fn random_unit() -> Self {
+        Self {
+            x: (random_double_unit()),
+            y: (random_double_unit()),
+            z: (random_double_unit()),
+        }
+    }
+
+    pub fn random_in_unit_sphere() -> Self {
+        loop {
+            let p = Vec3::random(-1., 1.);
+            if p.squared_length() >= 1. {
+                continue;
+            }
+            return p;
+        }
     }
 }
 

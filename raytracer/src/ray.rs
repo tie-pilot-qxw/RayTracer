@@ -5,6 +5,7 @@ use crate::Vec3;
 pub struct Ray {
     orig: Point3,
     dir: Vec3,
+    tm: f64,
 }
 
 impl Ray {
@@ -16,8 +17,16 @@ impl Ray {
         self.dir
     }
 
-    pub fn new(orig: Point3, dir: Vec3) -> Self {
-        Self { orig, dir }
+    pub fn time(&self) -> f64 {
+        self.tm
+    }
+
+    pub fn new(orig: Point3, dir: Vec3, time: f64) -> Self {
+        Self {
+            orig,
+            dir,
+            tm: time,
+        }
     }
 
     pub fn at(&self, t: f64) -> Point3 {

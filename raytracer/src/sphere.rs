@@ -33,7 +33,7 @@ impl Hittable for Sphere {
         }
         let sqrtd = discriminant.sqrt();
 
-        //Find the nearest root that lies in the acceptable range
+        // Find the nearest root that lies in the acceptable range
         let mut root = (-half_b - sqrtd) / a;
         if root < t_min || t_max < root {
             root = (-half_b + sqrtd) / a;

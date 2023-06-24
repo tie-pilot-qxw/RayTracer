@@ -3,6 +3,7 @@ mod color;
 mod hittable;
 mod hittable_list;
 mod material;
+mod moving_sphere;
 mod ray;
 mod rtweekend;
 mod sphere;
@@ -12,6 +13,7 @@ use color::write_color;
 use hittable::{HitRecord, Hittable};
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
+use moving_sphere::MovingSphere;
 use rtweekend::random_double;
 use std::{fs::File, sync::Arc};
 pub use vec3::Vec3;
@@ -42,7 +44,7 @@ fn ray_color(r: Ray, world: &impl Hittable, depth: isize) -> Color3 {
     }
 
     if world.hit(r, 0.000001, INFINITY, &mut rec) {
-        let mut scattered = Ray::new(Vec3::zero(), Vec3::zero());
+        let mut scattered = Ray::new(Vec3::zero(), Vec3::zero(), 0.);
         let mut attenuation = Color3::zero();
         if rec
             .mat_ptr
@@ -85,7 +87,15 @@ fn random_scene() -> HittableList {
                     // diffuse
                     let albedo = Color3::elemul(Color3::random_unit(), Color3::random_unit());
                     let sphere_material = Arc::new(Lambertian::new(albedo));
-                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                    let center2 = center + Vec3::new(0., random_double(0., 0.5), 0.);
+                    world.add(Box::new(MovingSphere::new(
+                        center,
+                        center2,
+                        0.,
+                        1.,
+                        0.2,
+                        sphere_material,
+                    )));
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Color3::random(0.5, 1.);
@@ -131,12 +141,12 @@ fn main() {
     println!("CI: {}", is_ci);
 
     // Image
-    let aspect_ratio: f64 = 3. / 2.;
-    let width: usize = 1200;
+    let aspect_ratio: f64 = 16. / 9.;
+    let width: usize = 400;
     let height: usize = (width as f64 / aspect_ratio) as usize;
     let path = "output/test.jpg";
     let quality = 60; // From 0 to 100, suggested value: 60
-    let samples_per_pixel: usize = 500;
+    let samples_per_pixel: usize = 100;
     let max_depth = 50;
 
     // Create image data
@@ -162,6 +172,8 @@ fn main() {
         aspect_ratio,
         aperture,
         dist_to_focus,
+        0.,
+        1.,
     );
 
     // Progress bar UI powered by library `indicatif`

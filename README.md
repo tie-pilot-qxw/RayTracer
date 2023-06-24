@@ -197,6 +197,3 @@
 　　John 班在 2021 年也使用了该项目，见[raytracer-tutorial](https://github.com/Mighty-A/raytracer-tutorial)。
 
 　　我们基于前人经验，根据 2022 级 John 班的需求，进行了一些调整。感谢 Alex Chi 学长和 ACM 班前辈们的宝贵经验和付出！
-
-
-# ~~加一点改动~~

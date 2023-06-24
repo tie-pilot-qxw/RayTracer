@@ -1,4 +1,8 @@
-use crate::{ray::Ray, rtweekend::degrees_to_radius, Point3, Vec3};
+use crate::{
+    ray::Ray,
+    rtweekend::{degrees_to_radius, random_double},
+    Point3, Vec3,
+};
 
 pub struct Camera {
     origin: Point3,
@@ -9,9 +13,12 @@ pub struct Camera {
     v: Vec3,
     _w: Vec3,
     lens_radius: f64,
+    time0: f64,
+    time1: f64,
 }
 
 impl Camera {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         lookfrom: Point3,
         lookat: Point3,
@@ -20,6 +27,8 @@ impl Camera {
         aspect_ratio: f64,
         aperture: f64,
         focus_dist: f64,
+        time0: f64,
+        time1: f64,
     ) -> Self {
         let theta = degrees_to_radius(vfov);
         let h = (theta / 2.).tan();
@@ -43,6 +52,8 @@ impl Camera {
             v,
             _w: w,
             lens_radius,
+            time0,
+            time1,
         }
     }
 
@@ -52,6 +63,7 @@ impl Camera {
         Ray::new(
             self.origin + offset,
             self.lower_left_corner + s * self.horizontal + t * self.vertical - self.origin - offset,
+            random_double(self.time0, self.time1),
         )
     }
 }

@@ -116,6 +116,16 @@ impl Vec3 {
         let r_out_parallel = -((1. - r_out_prep.squared_length()).abs()).sqrt() * n;
         r_out_parallel + r_out_prep
     }
+
+    pub fn random_in_unit_disk() -> Self {
+        loop {
+            let p = Vec3::new(random_double(-1., 1.), random_double(-1., 1.), 0.);
+            if p.squared_length() >= 1. {
+                continue;
+            }
+            return p;
+        }
+    }
 }
 
 impl Div<f64> for &Vec3 {

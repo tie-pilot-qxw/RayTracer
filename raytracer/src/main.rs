@@ -12,6 +12,7 @@ use color::write_color;
 use hittable::{HitRecord, Hittable};
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
+use rtweekend::random_double;
 use std::{fs::File, sync::Arc};
 pub use vec3::Vec3;
 pub type Point3 = Vec3;
@@ -60,83 +61,99 @@ fn ray_color(r: Ray, world: &impl Hittable, depth: isize) -> Color3 {
     (1.0 - t) * Color3::ones() + t * Color3::new(0.5, 0.7, 1.0)
 }
 
+fn random_scene() -> HittableList {
+    let mut world = HittableList::new();
+
+    let ground_material = Arc::new(Lambertian::new(Color3::new(0.5, 0.5, 0.5)));
+    world.add(Box::new(Sphere::new(
+        Point3::new(0., -1000., 0.),
+        1000.,
+        ground_material,
+    )));
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat = random_double_unit();
+            let center = Point3::new(
+                a as f64 + 0.9 * random_double_unit(),
+                0.2,
+                b as f64 + 0.9 * random_double_unit(),
+            );
+
+            if (center - Point3::new(4., 0.2, 0.)).length() > 0.9 {
+                if choose_mat < 0.8 {
+                    // diffuse
+                    let albedo = Color3::elemul(Color3::random_unit(), Color3::random_unit());
+                    let sphere_material = Arc::new(Lambertian::new(albedo));
+                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                } else if choose_mat < 0.95 {
+                    // metal
+                    let albedo = Color3::random(0.5, 1.);
+                    let fuzz = random_double(0., 0.5);
+                    let sphere_material = Arc::new(Metal::new(albedo, fuzz));
+                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                } else {
+                    // glass
+                    let sphere_material = Arc::new(Dielectric::new(1.5));
+                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                }
+            }
+        }
+    }
+    let material1 = Arc::new(Dielectric::new(1.5));
+    world.add(Box::new(Sphere::new(
+        Point3::new(0., 1., 0.),
+        1.,
+        material1,
+    )));
+
+    let material2 = Arc::new(Lambertian::new(Color3::new(0.4, 0.2, 0.1)));
+    world.add(Box::new(Sphere::new(
+        Point3::new(-4., 1., 0.),
+        1.,
+        material2,
+    )));
+
+    let material3 = Arc::new(Metal::new(Color3::new(0.7, 0.6, 0.5), 0.0));
+    world.add(Box::new(Sphere::new(
+        Point3::new(4., 1., 0.),
+        1.,
+        material3,
+    )));
+
+    world
+}
+
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
 
     println!("CI: {}", is_ci);
 
-    //Image
-    let aspect_ratio: f64 = 16.0 / 9.0;
-    let width: usize = 800;
+    // Image
+    let aspect_ratio: f64 = 3. / 2.;
+    let width: usize = 1200;
     let height: usize = (width as f64 / aspect_ratio) as usize;
     let path = "output/test.jpg";
     let quality = 60; // From 0 to 100, suggested value: 60
-    let samples_per_pixel: usize = 100;
+    let samples_per_pixel: usize = 500;
     let max_depth = 50;
 
     // Create image data
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
 
-    //World
-    /*
-    let R = (PI / 4.).cos();
-    let mut world = HittableList::new();
-    let material_left = Arc::new(Lambertian::new(Color3::new(0., 0., 1.)));
-    let material_right = Arc::new(Lambertian::new(Color3::new(1., 0., 0.)));
+    // World
 
-    world.add(Box::new(Sphere::new(
-        Point3::new(-R, 0., -1.),
-        R,
-        material_left,
-    )));
-    world.add(Box::new(Sphere::new(
-        Point3::new(R, 0., -1.),
-        R,
-        material_right,
-    )));*/
+    let mut world = random_scene();
 
-    let mut world = HittableList::new();
+    // Camera
 
-    let material_ground = Arc::new(Lambertian::new(Color3::new(0.8, 0.8, 0.0)));
-    let material_center = Arc::new(Lambertian::new(Color3::new(0.1, 0.2, 0.5)));
-    //let material_center = Arc::new(Dielectric::new(1.5));
-    //let material_left = Arc::new(Metal::new(Color3::new(0.8, 0.8, 0.8), 0.3));
-    let material_left = Arc::new(Dielectric::new(1.5));
-    let material_right = Arc::new(Metal::new(Color3::new(0.8, 0.6, 0.2), 0.0));
-
-    world.add(Box::new(Sphere::new(
-        Point3::new(0., -100.5, -1.),
-        100.,
-        material_ground,
-    )));
-    world.add(Box::new(Sphere::new(
-        Point3::new(0., 0., -1.),
-        0.5,
-        material_center,
-    )));
-    world.add(Box::new(Sphere::new(
-        Point3::new(-1., 0., -1.),
-        0.5,
-        material_left.clone(),
-    )));
-    world.add(Box::new(Sphere::new(
-        Point3::new(-1., 0., -1.),
-        -0.4,
-        material_left,
-    )));
-    world.add(Box::new(Sphere::new(
-        Point3::new(1., 0., -1.),
-        0.5,
-        material_right,
-    )));
-
-    //Create camera
-    let lookfrom = Point3::new(3., 3., 2.);
-    let lookat = Point3::new(0., 0., -1.);
+    let lookfrom = Point3::new(13., 2., 3.);
+    let lookat = Point3::new(0., 0., 0.);
     let vup = Vec3::new(0., 1., 0.);
-    let dist_to_focus = (lookfrom - lookat).length();
-    let aperture = 2.;
+    let dist_to_focus = 10.0;
+    let aperture = 0.1;
+
     let cam = Camera::new(
         lookfrom,
         lookat,

@@ -1,4 +1,4 @@
-use crate::hittable::{HitRecord, Hittable};
+use crate::{hittable::{HitRecord, Hittable}, aabb::AABB, Point3};
 
 pub struct HittableList {
     objects: Vec<Box<dyn Hittable>>,
@@ -35,5 +35,24 @@ impl Hittable for HittableList {
         }
 
         hit_anything
+    }
+
+    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut crate::aabb::AABB) -> bool {
+        if self.objects.is_empty() {
+            return false;
+        }
+
+        let mut temp_box = AABB::new(Point3::zero(), Point3::zero());
+        let mut first_box = true;
+
+        for object in &self.objects {
+            if !object.bounding_box(time0, time1, &mut temp_box) {
+                return false;
+            }
+            *output_box = if first_box {temp_box} else {AABB::surrounding_box(output_box, &temp_box)};
+            first_box = false;
+        }
+
+        true
     }
 }

@@ -4,6 +4,7 @@ use crate::hittable::{HitRecord, Hittable};
 use crate::material::Material;
 use crate::Point3;
 use crate::Vec3;
+use crate::aabb::AABB;
 
 pub struct Sphere {
     center: Point3,
@@ -47,6 +48,14 @@ impl Hittable for Sphere {
         let outward_normal = (rec.p - self.center) / self.radius;
         rec.set_face_normal(r, outward_normal);
         rec.mat_ptr = Some(self.mat_ptr.clone());
+        true
+    }
+
+    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut AABB) -> bool {
+        *output_box = AABB::new(
+            self.center - Vec3::new(self.radius, self.radius, self.radius),
+            self.center + Vec3::new(self.radius, self.radius, self.radius),
+        );
         true
     }
 }

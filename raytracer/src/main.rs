@@ -8,6 +8,7 @@ mod ray;
 mod rtweekend;
 mod sphere;
 mod vec3;
+mod aabb;
 
 use color::write_color;
 use hittable::{HitRecord, Hittable};

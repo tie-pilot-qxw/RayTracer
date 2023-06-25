@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign, Index, IndexMut};
 
 use crate::rtweekend::{random_double, random_double_unit};
 
@@ -296,6 +296,36 @@ impl SubAssign<f64> for Vec3 {
     }
 }
 
+impl Index<usize> for Vec3 {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        if index == 0 {
+            &self.x
+        } else if index == 1 {
+            &self.y
+        } else if index == 2 {
+            &self.z
+        } else {
+            panic!("Unvaild index!");
+        }
+    }
+}
+
+impl IndexMut<usize> for Vec3 {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        if index == 0 {
+            &mut self.x
+        } else if index == 1 {
+            &mut self.y
+        } else if index == 2 {
+            &mut self.z
+        } else {
+            panic!("Unvaild index!");
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -406,6 +436,33 @@ mod tests {
             Vec3::new(-233.0, 0.0, 0.0).unit(),
             Vec3::new(-1.0, 0.0, 0.0)
         );
+    }
+    #[test]
+    fn test_index() {
+        let test = Vec3::random_unit();
+        assert_eq!(test.x(), test[0]);
+        assert_eq!(test.y(), test[1]);
+        assert_eq!(test.z(), test[2]);
+    }
+    #[test]
+    fn test_index_mut() {
+        let mut test = Vec3::zero();
+        test[0] = 1.;
+        test[1] = 2.;
+        test[2] = 3.;
+        assert_eq!(test, Vec3::new(1., 2., 3.));
+    }
+    #[test]
+    #[should_panic]
+    fn test_index_panic() {
+        let test = Vec3::random_unit();
+        let _b = test[500];
+    }
+    #[test]
+    #[should_panic]
+    fn test_index_mut_panic() {
+        let mut test = Vec3::random_unit();
+        test[500] = 3.;
     }
     #[test]
     #[should_panic]

@@ -1,11 +1,17 @@
-use crate::{hittable::{HitRecord, Hittable}, aabb::AABB, Point3};
+use std::sync::Arc;
+
+use crate::{
+    aabb::AABB,
+    hittable::{HitRecord, Hittable},
+    Point3,
+};
 
 pub struct HittableList {
-    objects: Vec<Box<dyn Hittable>>,
+    pub objects: Vec<Arc<dyn Hittable>>,
 }
 
 impl HittableList {
-    pub fn add(&mut self, object: Box<dyn Hittable>) {
+    pub fn add(&mut self, object: Arc<dyn Hittable>) {
         self.objects.push(object);
     }
 
@@ -21,12 +27,12 @@ impl HittableList {
 }
 
 impl Hittable for HittableList {
-    fn hit(&self, r: crate::ray::Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
+    fn hit(&self, r: &crate::ray::Ray, t_min: f64, t_max: f64, rec: &mut HitRecord) -> bool {
         let mut hit_anything = false;
         let mut temp_rec = HitRecord::new();
         let mut closest_so_far = t_max;
         for object in &self.objects {
-            if object.hit(r, t_min, closest_so_far, &mut temp_rec) {
+            if object.hit(&r, t_min, closest_so_far, &mut temp_rec) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
                 *rec = temp_rec;
@@ -49,7 +55,11 @@ impl Hittable for HittableList {
             if !object.bounding_box(time0, time1, &mut temp_box) {
                 return false;
             }
-            *output_box = if first_box {temp_box} else {AABB::surrounding_box(output_box, &temp_box)};
+            *output_box = if first_box {
+                temp_box
+            } else {
+                AABB::surrounding_box(output_box, &temp_box)
+            };
             first_box = false;
         }
 

@@ -41,7 +41,7 @@ impl MovingSphere {
 impl Hittable for MovingSphere {
     fn hit(
         &self,
-        r: crate::ray::Ray,
+        r: &crate::ray::Ray,
         t_min: f64,
         t_max: f64,
         rec: &mut crate::hittable::HitRecord,

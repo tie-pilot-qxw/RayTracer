@@ -1,3 +1,5 @@
+mod aabb;
+mod bvh;
 mod camera;
 mod color;
 mod hittable;
@@ -8,7 +10,6 @@ mod ray;
 mod rtweekend;
 mod sphere;
 mod vec3;
-mod aabb;
 
 use color::write_color;
 use hittable::{HitRecord, Hittable};
@@ -44,7 +45,7 @@ fn ray_color(r: Ray, world: &impl Hittable, depth: isize) -> Color3 {
         return Color3::new(0., 0., 0.);
     }
 
-    if world.hit(r, 0.000001, INFINITY, &mut rec) {
+    if world.hit(&r, 0.000001, INFINITY, &mut rec) {
         let mut scattered = Ray::new(Vec3::zero(), Vec3::zero(), 0.);
         let mut attenuation = Color3::zero();
         if rec
@@ -68,7 +69,7 @@ fn random_scene() -> HittableList {
     let mut world = HittableList::new();
 
     let ground_material = Arc::new(Lambertian::new(Color3::new(0.5, 0.5, 0.5)));
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Point3::new(0., -1000., 0.),
         1000.,
         ground_material,
@@ -89,7 +90,7 @@ fn random_scene() -> HittableList {
                     let albedo = Color3::elemul(Color3::random_unit(), Color3::random_unit());
                     let sphere_material = Arc::new(Lambertian::new(albedo));
                     let center2 = center + Vec3::new(0., random_double(0., 0.5), 0.);
-                    world.add(Box::new(MovingSphere::new(
+                    world.add(Arc::new(MovingSphere::new(
                         center,
                         center2,
                         0.,
@@ -102,31 +103,31 @@ fn random_scene() -> HittableList {
                     let albedo = Color3::random(0.5, 1.);
                     let fuzz = random_double(0., 0.5);
                     let sphere_material = Arc::new(Metal::new(albedo, fuzz));
-                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                    world.add(Arc::new(Sphere::new(center, 0.2, sphere_material)));
                 } else {
                     // glass
                     let sphere_material = Arc::new(Dielectric::new(1.5));
-                    world.add(Box::new(Sphere::new(center, 0.2, sphere_material)));
+                    world.add(Arc::new(Sphere::new(center, 0.2, sphere_material)));
                 }
             }
         }
     }
     let material1 = Arc::new(Dielectric::new(1.5));
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Point3::new(0., 1., 0.),
         1.,
         material1,
     )));
 
     let material2 = Arc::new(Lambertian::new(Color3::new(0.4, 0.2, 0.1)));
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Point3::new(-4., 1., 0.),
         1.,
         material2,
     )));
 
     let material3 = Arc::new(Metal::new(Color3::new(0.7, 0.6, 0.5), 0.0));
-    world.add(Box::new(Sphere::new(
+    world.add(Arc::new(Sphere::new(
         Point3::new(4., 1., 0.),
         1.,
         material3,

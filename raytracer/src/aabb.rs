@@ -1,8 +1,9 @@
 use std::mem::swap;
 
-use crate::{Point3, ray::Ray};
+use crate::{ray::Ray, Point3};
 
 #[derive(Clone, Debug, PartialEq, Copy)]
+#[allow(clippy::upper_case_acronyms)]
 pub struct AABB {
     minimum: Point3,
     maximum: Point3,
@@ -42,13 +43,16 @@ impl AABB {
         let small = Point3::new(
             box0.min().x().min(box1.min().x()),
             box0.min().y().min(box1.min().y()),
-            box1.min().z().min(box1.min().z())
+            box1.min().z().min(box1.min().z()),
         );
         let big = Point3::new(
             box0.max().x().max(box1.max().x()),
             box0.max().y().max(box1.max().y()),
-            box1.max().z().max(box1.max().z())
+            box1.max().z().max(box1.max().z()),
         );
-        Self { minimum: (small), maximum: (big) }
+        Self {
+            minimum: (small),
+            maximum: (big),
+        }
     }
 }

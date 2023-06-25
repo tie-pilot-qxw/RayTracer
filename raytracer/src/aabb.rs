@@ -43,12 +43,12 @@ impl AABB {
         let small = Point3::new(
             box0.min().x().min(box1.min().x()),
             box0.min().y().min(box1.min().y()),
-            box1.min().z().min(box1.min().z()),
+            box0.min().z().min(box1.min().z()),
         );
         let big = Point3::new(
             box0.max().x().max(box1.max().x()),
             box0.max().y().max(box1.max().y()),
-            box1.max().z().max(box1.max().z()),
+            box0.max().z().max(box1.max().z()),
         );
         Self {
             minimum: (small),

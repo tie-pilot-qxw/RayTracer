@@ -21,6 +21,7 @@ use std::{fs::File, sync::Arc};
 pub use vec3::Vec3;
 pub type Point3 = Vec3;
 pub type Color3 = Vec3;
+use bvh::BVH;
 use hittable_list::HittableList;
 use ray::Ray;
 use std::f64::INFINITY;
@@ -156,7 +157,7 @@ fn main() {
 
     // World
 
-    let mut world = random_scene();
+    let world = BVH::new(&random_scene(), 0., 1.);
 
     // Camera
 
@@ -204,7 +205,7 @@ fn main() {
     // Finish progress bar
     bar.finish();
 
-    world.clear();
+    //world.clear();
 
     // Output image to file
     println!("Ouput image as \"{}\"\n Author: {}", path, AUTHOR);

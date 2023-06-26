@@ -3,7 +3,7 @@ on:
     tags:
       - "*"
 
-name: Book1 final # Continuous Integration
+name: texture trait
 
 jobs:
   lint:

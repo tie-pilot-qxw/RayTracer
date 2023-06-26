@@ -71,6 +71,9 @@ impl NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn value(&self, _u: f64, _v: f64, p: &Point3) -> Color3 {
-        Color3::ones() * 0.5 * (1.0 + self.noise.noise(&(*p * self.scale)))
+        // Color3::ones() * 0.5 * (1.0 + self.noise.noise(&(*p * self.scale))) // perlin noise
+        // Color3::ones() * self.noise.turb(&(*p * self.scale), 7) // perlin noise with turbulence
+        Color3::ones() * 0.5 * (1. + (self.scale * p.z() + 10. * self.noise.turb(p, 7)).sin())
+        // marble-like texture
     }
 }

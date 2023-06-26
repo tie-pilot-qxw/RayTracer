@@ -3,8 +3,10 @@ use std::sync::Arc;
 
 use crate::aabb::AABB;
 use crate::hittable::HitRecord;
+use crate::material::Dielectric;
 use crate::ray::Ray;
 use crate::rtweekend::random_int;
+use crate::sphere::Sphere;
 use crate::Point3;
 use crate::{hittable::Hittable, hittable_list::HittableList};
 
@@ -35,7 +37,14 @@ impl BVH {
         let object_span = objects.len();
         let left: Arc<dyn Hittable>;
         let right: Arc<dyn Hittable>;
-        if object_span == 1 {
+        if object_span == 0 {
+            left = Arc::new(Sphere::new(
+                Point3::zero(),
+                0.,
+                Arc::new(Dielectric::new(1.)),
+            ));
+            right = left.clone();
+        } else if object_span == 1 {
             left = objects[0].clone();
             right = objects[0].clone();
         } else if object_span == 2 {

@@ -9,6 +9,7 @@ mod moving_sphere;
 mod ray;
 mod rtweekend;
 mod sphere;
+mod texture;
 mod vec3;
 
 use color::write_color;
@@ -18,6 +19,7 @@ use indicatif::ProgressBar;
 use moving_sphere::MovingSphere;
 use rtweekend::random_double;
 use std::{fs::File, sync::Arc};
+use texture::CheckerTexture;
 pub use vec3::Vec3;
 pub type Point3 = Vec3;
 pub type Color3 = Vec3;
@@ -69,7 +71,11 @@ fn ray_color(r: Ray, world: &impl Hittable, depth: isize) -> Color3 {
 fn random_scene() -> HittableList {
     let mut world = HittableList::new();
 
-    let ground_material = Arc::new(Lambertian::new(Color3::new(0.5, 0.5, 0.5)));
+    let checker = Arc::new(CheckerTexture::new_solid(
+        Color3::new(0.2, 0.3, 0.1),
+        Color3::new(0.9, 0.9, 0.9),
+    ));
+    let ground_material = Arc::new(Lambertian::new_texture(checker));
     world.add(Arc::new(Sphere::new(
         Point3::new(0., -1000., 0.),
         1000.,
@@ -137,6 +143,29 @@ fn random_scene() -> HittableList {
     world
 }
 
+fn two_spheres() -> HittableList {
+    let mut objects = HittableList::new();
+
+    let checker = Arc::new(CheckerTexture::new_solid(
+        Color3::new(0.2, 0.3, 0.1),
+        Color3::new(0.9, 0.9, 0.9),
+    ));
+
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(0., -10., 0.),
+        10.,
+        Arc::new(Lambertian::new_texture(checker.clone())),
+    )));
+
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(0., 10., 0.),
+        10.,
+        Arc::new(Lambertian::new_texture(checker)),
+    )));
+
+    objects
+}
+
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -156,22 +185,42 @@ fn main() {
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
 
     // World
+    let world: BVH;
 
-    let world = BVH::new(&random_scene(), 0., 1.);
+    let mut lookfrom = Point3::ones();
+    let mut lookat = Point3::zero();
+    let mut vfov = 40.;
+    let mut aperture = 0.;
+
+    match 2 {
+        1 => {
+            world = BVH::new(&random_scene(), 0., 1.);
+            lookfrom = Point3::new(13., 2., 3.);
+            lookat = Point3::new(0., 0., 0.);
+            vfov = 20.0;
+            aperture = 0.1;
+        }
+        2 => {
+            world = BVH::new(&two_spheres(), 0., 0.);
+            lookfrom = Point3::new(13., 2., 3.);
+            lookat = Point3::new(0., 0., 0.);
+            vfov = 20.0;
+        }
+        _ => {
+            world = BVH::new(&HittableList::new(), 0., 0.);
+        }
+    }
 
     // Camera
 
-    let lookfrom = Point3::new(13., 2., 3.);
-    let lookat = Point3::new(0., 0., 0.);
     let vup = Vec3::new(0., 1., 0.);
     let dist_to_focus = 10.0;
-    let aperture = 0.1;
 
     let cam = Camera::new(
         lookfrom,
         lookat,
         vup,
-        20.,
+        vfov,
         aspect_ratio,
         aperture,
         dist_to_focus,

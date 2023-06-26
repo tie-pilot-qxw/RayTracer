@@ -1,3 +1,4 @@
+use std::f64::consts::PI;
 use std::sync::Arc;
 
 use crate::aabb::AABB;
@@ -19,6 +20,16 @@ impl Sphere {
             radius,
             mat_ptr,
         }
+    }
+
+    fn get_sphere_uv(p: &Point3, u: &mut f64, v: &mut f64) {
+        // p: a given point on the sphere of radius one, centered at the origin.
+        // u: returned value [0,1] of angle around the Y axis from X=-1.
+        // v: returned value [0,1] of angle from Y=-1 to Y=+1.
+        let theta = (-p.y()).acos();
+        let phi = (-p.z()).atan2(p.x()) + PI;
+        *u = phi / (2. * PI);
+        *v = theta / PI;
     }
 }
 
@@ -47,6 +58,7 @@ impl Hittable for Sphere {
         rec.p = r.at(rec.t);
         let outward_normal = (rec.p - self.center) / self.radius;
         rec.set_face_normal(r, outward_normal);
+        Self::get_sphere_uv(&outward_normal, &mut rec.u, &mut rec.v);
         rec.mat_ptr = Some(self.mat_ptr.clone());
         true
     }
@@ -58,4 +70,13 @@ impl Hittable for Sphere {
         );
         true
     }
+}
+
+#[test]
+fn test_get_uv() {
+    let mut u = 0.;
+    let mut v = 0.;
+    Sphere::get_sphere_uv(&Point3::new(0., 0., -1.), &mut u, &mut v);
+    assert_eq!(u, 0.75);
+    assert_eq!(v, 0.5);
 }

@@ -19,7 +19,7 @@ use indicatif::ProgressBar;
 use moving_sphere::MovingSphere;
 use rtweekend::random_double;
 use std::{fs::File, sync::Arc};
-use texture::CheckerTexture;
+use texture::{CheckerTexture, NoiseTexture};
 pub use vec3::Vec3;
 pub type Point3 = Vec3;
 pub type Color3 = Vec3;
@@ -166,6 +166,26 @@ fn two_spheres() -> HittableList {
     objects
 }
 
+fn two_perlin_spheres() -> HittableList {
+    let mut objects = HittableList::new();
+
+    let pertext = Arc::new(NoiseTexture::new());
+
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(0., -1000., 0.),
+        1000.,
+        Arc::new(Lambertian::new_texture(pertext.clone())),
+    )));
+
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(0., 2., 0.),
+        2.,
+        Arc::new(Lambertian::new_texture(pertext)),
+    )));
+
+    objects
+}
+
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -192,7 +212,7 @@ fn main() {
     let mut vfov = 40.;
     let mut aperture = 0.;
 
-    match 2 {
+    match 3 {
         1 => {
             world = BVH::new(&random_scene(), 0., 1.);
             lookfrom = Point3::new(13., 2., 3.);
@@ -202,6 +222,12 @@ fn main() {
         }
         2 => {
             world = BVH::new(&two_spheres(), 0., 0.);
+            lookfrom = Point3::new(13., 2., 3.);
+            lookat = Point3::new(0., 0., 0.);
+            vfov = 20.0;
+        }
+        3 => {
+            world = BVH::new(&&two_perlin_spheres(), 0., 0.);
             lookfrom = Point3::new(13., 2., 3.);
             lookat = Point3::new(0., 0., 0.);
             vfov = 20.0;

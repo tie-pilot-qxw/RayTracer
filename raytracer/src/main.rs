@@ -9,7 +9,9 @@ mod vec3;
 use color::write_color;
 use hittable::{
     aarect::{XyRect, XzRect, YzRect},
-    bvh, hittable_list, moving_sphere, HitRecord, Hittable, RotateY, Translate,
+    bvh,
+    constant_medium::ConstantMedium,
+    hittable_list, moving_sphere, HitRecord, Hittable, RotateY, Translate,
 };
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
@@ -282,6 +284,65 @@ fn cornell_box() -> HittableList {
     objects
 }
 
+fn cornell_smoke() -> HittableList {
+    let mut objects = HittableList::new();
+
+    let red = Arc::new(Lambertian::new(Color3::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new(Color3::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new(Color3::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::new_color(Color3::new(15., 15., 15.)));
+
+    objects.add(Arc::new(YzRect::new(0., 555., 0., 555., 555., green)));
+    objects.add(Arc::new(YzRect::new(0., 555., 0., 555., 0., red)));
+    objects.add(Arc::new(XzRect::new(213., 343., 227., 332., 554., light)));
+    objects.add(Arc::new(XzRect::new(0., 555., 0., 555., 0., white.clone())));
+    objects.add(Arc::new(XzRect::new(
+        0.,
+        555.,
+        0.,
+        555.,
+        555.,
+        white.clone(),
+    )));
+    objects.add(Arc::new(XyRect::new(
+        0.,
+        555.,
+        0.,
+        555.,
+        555.,
+        white.clone(),
+    )));
+
+    let mut box1: Arc<dyn Hittable> = Arc::new(Boxes::new(
+        &Point3::zero(),
+        &Point3::new(165., 330., 165.),
+        white.clone(),
+    ));
+    box1 = Arc::new(RotateY::new(box1, 15.));
+    box1 = Arc::new(Translate::new(box1, Vec3::new(265., 0., 295.)));
+
+    let mut box2: Arc<dyn Hittable> = Arc::new(Boxes::new(
+        &Point3::zero(),
+        &Point3::new(165., 165., 165.),
+        white,
+    ));
+    box2 = Arc::new(RotateY::new(box2, -18.));
+    box2 = Arc::new(Translate::new(box2, Vec3::new(130., 0., 65.)));
+
+    objects.add(Arc::new(ConstantMedium::new_color(
+        box1,
+        0.01,
+        Color3::zero(),
+    )));
+    objects.add(Arc::new(ConstantMedium::new_color(
+        box2,
+        0.01,
+        Color3::ones(),
+    )));
+
+    objects
+}
+
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -305,7 +366,7 @@ fn main() {
     let mut aperture = 0.;
     let mut background = Color3::zero();
 
-    match 6 {
+    match 7 {
         1 => {
             world = BVH::new(&random_scene(), 0., 1.);
             lookfrom = Point3::new(13., 2., 3.);
@@ -349,6 +410,15 @@ fn main() {
             width = 600;
             samples_per_pixel = 200;
             background = Color3::zero();
+            lookfrom = Point3::new(278., 278., -800.);
+            lookat = Point3::new(278., 278., 0.);
+            vfov = 40.;
+        }
+        7 => {
+            world = BVH::new(&cornell_smoke(), 0., 0.);
+            aspect_ratio = 1.;
+            width = 600;
+            samples_per_pixel = 200;
             lookfrom = Point3::new(278., 278., -800.);
             lookat = Point3::new(278., 278., 0.);
             vfov = 40.;

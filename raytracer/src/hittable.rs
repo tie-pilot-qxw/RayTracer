@@ -2,6 +2,7 @@ mod aabb;
 pub mod aarect;
 pub mod boxes;
 pub mod bvh;
+pub mod constant_medium;
 pub mod hittable_list;
 pub mod moving_sphere;
 pub mod sphere;

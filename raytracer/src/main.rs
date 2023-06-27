@@ -194,7 +194,7 @@ fn earth() -> HittableList {
     objects.add(globe);
     objects
 }
-#[allow(unused_assignments, unused_variables)]
+
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -221,7 +221,7 @@ fn main() {
     let mut vfov = 40.;
     let mut aperture = 0.;
 
-    match 1 {
+    match 4 {
         1 => {
             world = BVH::new(&random_scene(), 0., 1.);
             lookfrom = Point3::new(13., 2., 3.);
@@ -252,7 +252,6 @@ fn main() {
         }
     }
 
-    let world = random_scene();
     // Camera
 
     let vup = Vec3::new(0., 1., 0.);

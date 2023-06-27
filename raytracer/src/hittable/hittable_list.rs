@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    aabb::AABB,
+    hittable::aabb::AABB,
     hittable::{HitRecord, Hittable},
     Point3,
 };
@@ -39,7 +39,7 @@ impl Hittable for HittableList {
         hit_anything
     }
 
-    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut crate::aabb::AABB) -> bool {
+    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut AABB) -> bool {
         if self.objects.is_empty() {
             return false;
         }

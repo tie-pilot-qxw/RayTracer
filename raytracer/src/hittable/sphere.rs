@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 use std::sync::Arc;
 
-use crate::aabb::AABB;
+use crate::hittable::aabb::AABB;
 use crate::hittable::{HitRecord, Hittable};
 use crate::material::Material;
 use crate::Point3;

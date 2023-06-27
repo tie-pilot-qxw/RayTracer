@@ -1,14 +1,14 @@
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use crate::aabb::AABB;
+use crate::hittable::aabb::AABB;
+use crate::hittable::sphere::Sphere;
 use crate::hittable::HitRecord;
 use crate::material::Dielectric;
 use crate::ray::Ray;
 use crate::rtweekend::random_int;
-use crate::sphere::Sphere;
 use crate::Point3;
-use crate::{hittable::Hittable, hittable_list::HittableList};
+use crate::{hittable::hittable_list::HittableList, hittable::Hittable};
 
 #[allow(clippy::upper_case_acronyms)]
 pub struct BVH {

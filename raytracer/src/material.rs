@@ -1,12 +1,10 @@
 use std::sync::Arc;
 
-use crate::{
-    hittable::HitRecord,
-    ray::Ray,
-    rtweekend::random_double_unit,
-    texture::{SolidColor, Texture},
-    Color3, Point3, Vec3,
-};
+pub mod texture;
+
+use crate::{hittable::HitRecord, ray::Ray, rtweekend::random_double_unit, Color3, Point3, Vec3};
+
+use texture::{SolidColor, Texture};
 
 pub trait Material {
     fn scatter(

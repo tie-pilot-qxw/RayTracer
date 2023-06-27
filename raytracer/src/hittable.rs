@@ -1,10 +1,16 @@
+mod aabb;
+pub mod bvh;
+pub mod hittable_list;
+pub mod moving_sphere;
+pub mod sphere;
+
 use std::sync::Arc;
 
-use crate::aabb::AABB;
 use crate::material::Material;
 use crate::Point3;
 use crate::Ray;
 use crate::Vec3;
+use aabb::AABB;
 
 pub struct HitRecord {
     pub p: Point3,

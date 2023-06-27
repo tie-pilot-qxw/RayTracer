@@ -1,25 +1,19 @@
-mod aabb;
-mod bvh;
 mod camera;
 mod color;
 mod hittable;
-mod hittable_list;
 mod material;
-mod moving_sphere;
 mod ray;
 mod rtweekend;
-mod sphere;
-mod texture;
 mod vec3;
 
 use color::write_color;
-use hittable::{HitRecord, Hittable};
+use hittable::{bvh, hittable_list, moving_sphere, HitRecord, Hittable};
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
+use material::texture::{CheckerTexture, ImageTexture, NoiseTexture};
 use moving_sphere::MovingSphere;
 use rtweekend::random_double;
 use std::{fs::File, sync::Arc};
-use texture::{CheckerTexture, ImageTexture, NoiseTexture};
 pub use vec3::Vec3;
 pub type Point3 = Vec3;
 pub type Color3 = Vec3;
@@ -30,9 +24,9 @@ use std::f64::INFINITY;
 
 use crate::{
     camera::Camera,
+    hittable::sphere::Sphere,
     material::{Dielectric, Lambertian, Metal},
     rtweekend::random_double_unit,
-    sphere::Sphere,
 };
 
 const AUTHOR: &str = "Xinwei Qiang";

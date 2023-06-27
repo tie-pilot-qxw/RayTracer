@@ -1,4 +1,4 @@
-use crate::aabb::AABB;
+use crate::hittable::aabb::AABB;
 use crate::hittable::Hittable;
 use crate::material::Material;
 use crate::{Point3, Vec3};
@@ -75,7 +75,7 @@ impl Hittable for MovingSphere {
         true
     }
 
-    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut crate::aabb::AABB) -> bool {
+    fn bounding_box(&self, time0: f64, time1: f64, output_box: &mut AABB) -> bool {
         let box0 = AABB::new(
             self.center(time0) - Vec3::new(self.radius, self.radius, self.radius),
             self.center(time0) + Vec3::new(self.radius, self.radius, self.radius),

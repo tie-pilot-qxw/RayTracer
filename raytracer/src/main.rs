@@ -9,7 +9,7 @@ mod vec3;
 use color::write_color;
 use hittable::{
     aarect::{XyRect, XzRect, YzRect},
-    bvh, hittable_list, moving_sphere, HitRecord, Hittable,
+    bvh, hittable_list, moving_sphere, HitRecord, Hittable, RotateY, Translate,
 };
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
@@ -24,7 +24,7 @@ pub use vec3::Vec3;
 pub type Point3 = Vec3;
 pub type Color3 = Vec3;
 use bvh::BVH;
-use hittable::boxs::Boxs;
+use hittable::boxes::Boxes;
 use hittable_list::HittableList;
 use ray::Ray;
 use std::f64::INFINITY;
@@ -261,16 +261,23 @@ fn cornell_box() -> HittableList {
         white.clone(),
     )));
 
-    objects.add(Arc::new(Boxs::new(
-        &Point3::new(130., 0., 65.),
-        &Point3::new(295., 165., 230.),
+    let mut box1: Arc<dyn Hittable> = Arc::new(Boxes::new(
+        &Point3::zero(),
+        &Point3::new(165., 330., 165.),
         white.clone(),
-    )));
-    objects.add(Arc::new(Boxs::new(
-        &Point3::new(265., 0., 295.),
-        &Point3::new(430., 330., 460.),
+    ));
+    box1 = Arc::new(RotateY::new(box1, 15.));
+    box1 = Arc::new(Translate::new(box1, Vec3::new(265., 0., 295.)));
+    objects.add(box1);
+
+    let mut box2: Arc<dyn Hittable> = Arc::new(Boxes::new(
+        &Point3::zero(),
+        &Point3::new(165., 165., 165.),
         white,
-    )));
+    ));
+    box2 = Arc::new(RotateY::new(box2, -18.));
+    box2 = Arc::new(Translate::new(box2, Vec3::new(130., 0., 65.)));
+    objects.add(box2);
 
     objects
 }

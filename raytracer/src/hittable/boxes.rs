@@ -9,13 +9,13 @@ use super::{
     Hittable, Material,
 };
 
-pub struct Boxs {
+pub struct Boxes {
     box_min: Point3,
     box_max: Point3,
     sides: HittableList,
 }
 
-impl Boxs {
+impl Boxes {
     pub fn new(p0: &Point3, p1: &Point3, ptr: Arc<dyn Material>) -> Self {
         let mut sides = HittableList::new();
         sides.add(Arc::new(XyRect::new(
@@ -77,7 +77,7 @@ impl Boxs {
     }
 }
 
-impl Hittable for Boxs {
+impl Hittable for Boxes {
     fn bounding_box(&self, _time0: f64, _time1: f64, output_box: &mut super::aabb::AABB) -> bool {
         *output_box = AABB::new(self.box_min, self.box_max);
         true

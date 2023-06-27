@@ -212,8 +212,19 @@ fn simple_light() -> HittableList {
     )));
 
     let difflight = Arc::new(DiffuseLight::new_color(Color3::ones() * 4.));
-    objects.add(Arc::new(XyRect::new(3., 5., 1., 3., -2., difflight)));
-
+    objects.add(Arc::new(XyRect::new(
+        3.,
+        5.,
+        1.,
+        3.,
+        -2.,
+        difflight.clone(),
+    )));
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(0., 7., 0.),
+        2.,
+        difflight,
+    )));
     objects
 }
 

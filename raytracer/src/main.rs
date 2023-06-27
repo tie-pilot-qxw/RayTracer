@@ -343,6 +343,116 @@ fn cornell_smoke() -> HittableList {
     objects
 }
 
+fn final_scene() -> HittableList {
+    let mut boxes1 = HittableList::new();
+    let ground = Arc::new(Lambertian::new(Color3::new(0.48, 0.83, 0.53)));
+
+    let boxes_per_side = 20;
+    for i in 0..boxes_per_side {
+        for j in 0..boxes_per_side {
+            let w = 100.;
+            let x0 = -1000. + i as f64 * w;
+            let z0 = -1000. + j as f64 * w;
+            let y0 = 0.;
+            let x1 = x0 + w;
+            let y1 = random_double(1., 101.);
+            let z1 = z0 + w;
+
+            boxes1.add(Arc::new(Boxes::new(
+                &Point3::new(x0, y0, z0),
+                &Point3::new(x1, y1, z1),
+                ground.clone(),
+            )));
+        }
+    }
+
+    let mut objects = HittableList::new();
+
+    objects.add(Arc::new(BVH::new(&boxes1, 0., 1.)));
+
+    let light = Arc::new(DiffuseLight::new_color(Color3::ones() * 7.));
+    objects.add(Arc::new(XzRect::new(123., 423., 147., 412., 554., light)));
+
+    let center1 = Point3::new(400., 400., 200.);
+    let center2 = center1 + Vec3::new(30., 0., 0.);
+    let moving_sphere_material = Arc::new(Lambertian::new(Color3::new(0.7, 0.3, 0.1)));
+    objects.add(Arc::new(MovingSphere::new(
+        center1,
+        center2,
+        0.,
+        1.,
+        50.,
+        moving_sphere_material,
+    )));
+
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(260., 150., 45.),
+        50.,
+        Arc::new(Dielectric::new(1.5)),
+    )));
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(0., 150., 145.),
+        50.,
+        Arc::new(Metal::new(Color3::new(0.8, 0.8, 0.9), 1.0)),
+    )));
+
+    let mut boundary = Arc::new(Sphere::new(
+        Point3::new(360., 150., 145.),
+        70.,
+        Arc::new(Dielectric::new(1.5)),
+    ));
+    objects.add(boundary.clone());
+    objects.add(Arc::new(ConstantMedium::new_color(
+        boundary,
+        0.2,
+        Color3::new(0.2, 0.4, 0.9),
+    )));
+    boundary = Arc::new(Sphere::new(
+        Point3::zero(),
+        5000.,
+        Arc::new(Dielectric::new(1.5)),
+    ));
+    objects.add(Arc::new(ConstantMedium::new_color(
+        boundary,
+        0.0001,
+        Color3::ones(),
+    )));
+
+    let emat = Arc::new(Lambertian::new_texture(Arc::new(ImageTexture::new(
+        &"raytracer/res/earthmap.jpg".to_string(),
+    ))));
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(400., 200., 400.),
+        100.,
+        emat,
+    )));
+
+    let pertext = Arc::new(NoiseTexture::new(0.1));
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(220., 280., 300.),
+        80.,
+        Arc::new(Lambertian::new_texture(pertext)),
+    )));
+
+    let mut boxes2 = HittableList::new();
+    let white = Arc::new(Lambertian::new(Color3::ones() * 0.73));
+    let ns = 1000;
+    for _j in 0..ns {
+        boxes2.add(Arc::new(Sphere::new(
+            Point3::random(0., 165.),
+            10.,
+            white.clone(),
+        )));
+    }
+
+    objects.add(Arc::new(Translate::new(
+        Arc::new(RotateY::new(Arc::new(BVH::new(&boxes2, 0.0, 1.0)), 15.)),
+        Vec3::new(-100., 270., 395.),
+    )));
+
+    objects
+}
+
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -366,7 +476,7 @@ fn main() {
     let mut aperture = 0.;
     let mut background = Color3::zero();
 
-    match 7 {
+    match 8 {
         1 => {
             world = BVH::new(&random_scene(), 0., 1.);
             lookfrom = Point3::new(13., 2., 3.);
@@ -420,6 +530,16 @@ fn main() {
             width = 600;
             samples_per_pixel = 200;
             lookfrom = Point3::new(278., 278., -800.);
+            lookat = Point3::new(278., 278., 0.);
+            vfov = 40.;
+        }
+        8 => {
+            world = BVH::new(&final_scene(), 0., 1.);
+            aspect_ratio = 1.;
+            width = 800;
+            samples_per_pixel = 10000;
+            background = Color3::zero();
+            lookfrom = Point3::new(478., 278., -600.);
             lookat = Point3::new(278., 278., 0.);
             vfov = 40.;
         }

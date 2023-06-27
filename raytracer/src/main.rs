@@ -19,7 +19,7 @@ use indicatif::ProgressBar;
 use moving_sphere::MovingSphere;
 use rtweekend::random_double;
 use std::{fs::File, sync::Arc};
-use texture::{CheckerTexture, NoiseTexture};
+use texture::{CheckerTexture, ImageTexture, NoiseTexture};
 pub use vec3::Vec3;
 pub type Point3 = Vec3;
 pub type Color3 = Vec3;
@@ -186,6 +186,15 @@ fn two_perlin_spheres() -> HittableList {
     objects
 }
 
+fn earth() -> HittableList {
+    let mut objects = HittableList::new();
+    let earth_texture = Arc::new(ImageTexture::new(&"raytracer/res/earthmap.jpg".to_string()));
+    let earth_surface = Arc::new(Lambertian::new_texture(earth_texture));
+    let globe = Arc::new(Sphere::new(Point3::new(0., 0., 0.), 2., earth_surface));
+    objects.add(globe);
+    objects
+}
+
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -212,7 +221,7 @@ fn main() {
     let mut vfov = 40.;
     let mut aperture = 0.;
 
-    match 3 {
+    match 4 {
         1 => {
             world = BVH::new(&random_scene(), 0., 1.);
             lookfrom = Point3::new(13., 2., 3.);
@@ -228,6 +237,12 @@ fn main() {
         }
         3 => {
             world = BVH::new(&&two_perlin_spheres(), 0., 0.);
+            lookfrom = Point3::new(13., 2., 3.);
+            lookat = Point3::new(0., 0., 0.);
+            vfov = 20.0;
+        }
+        4 => {
+            world = BVH::new(&earth(), 0., 0.);
             lookfrom = Point3::new(13., 2., 3.);
             lookat = Point3::new(0., 0., 0.);
             vfov = 20.0;

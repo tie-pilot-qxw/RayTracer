@@ -7,7 +7,10 @@ mod rtweekend;
 mod vec3;
 
 use color::write_color;
-use hittable::{aarect::XyRect, bvh, hittable_list, moving_sphere, HitRecord, Hittable};
+use hittable::{
+    aarect::{XyRect, XzRect, YzRect},
+    bvh, hittable_list, moving_sphere, HitRecord, Hittable,
+};
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
 use material::{
@@ -228,6 +231,31 @@ fn simple_light() -> HittableList {
     objects
 }
 
+fn cornell_box() -> HittableList {
+    let mut objects = HittableList::new();
+
+    let red = Arc::new(Lambertian::new(Color3::new(0.65, 0.05, 0.05)));
+    let white = Arc::new(Lambertian::new(Color3::new(0.73, 0.73, 0.73)));
+    let green = Arc::new(Lambertian::new(Color3::new(0.12, 0.45, 0.15)));
+    let light = Arc::new(DiffuseLight::new_color(Color3::new(15., 15., 15.)));
+
+    objects.add(Arc::new(YzRect::new(0., 555., 0., 555., 555., green)));
+    objects.add(Arc::new(YzRect::new(0., 555., 0., 555., 0., red)));
+    objects.add(Arc::new(XzRect::new(213., 343., 227., 332., 554., light)));
+    objects.add(Arc::new(XzRect::new(0., 555., 0., 555., 0., white.clone())));
+    objects.add(Arc::new(XzRect::new(
+        0.,
+        555.,
+        0.,
+        555.,
+        555.,
+        white.clone(),
+    )));
+    objects.add(Arc::new(XyRect::new(0., 555., 0., 555., 555., white)));
+
+    objects
+}
+
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -235,16 +263,12 @@ fn main() {
     println!("CI: {}", is_ci);
 
     // Image
-    let aspect_ratio: f64 = 16. / 9.;
-    let width: usize = 400;
-    let height: usize = (width as f64 / aspect_ratio) as usize;
+    let mut aspect_ratio: f64 = 16. / 9.;
+    let mut width: usize = 400;
     let path = "output/test.jpg";
     let quality = 60; // From 0 to 100, suggested value: 60
     let mut samples_per_pixel: usize = 100;
     let max_depth = 50;
-
-    // Create image data
-    let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
 
     // World
     let world: BVH;
@@ -255,7 +279,7 @@ fn main() {
     let mut aperture = 0.;
     let mut background = Color3::zero();
 
-    match 5 {
+    match 6 {
         1 => {
             world = BVH::new(&random_scene(), 0., 1.);
             lookfrom = Point3::new(13., 2., 3.);
@@ -293,10 +317,21 @@ fn main() {
             lookat = Point3::new(0., 2., 0.);
             vfov = 20.0
         }
+        6 => {
+            world = BVH::new(&cornell_box(), 0., 0.);
+            aspect_ratio = 1.;
+            width = 600;
+            samples_per_pixel = 200;
+            background = Color3::zero();
+            lookfrom = Point3::new(278., 278., -800.);
+            lookat = Point3::new(278., 278., 0.);
+            vfov = 40.;
+        }
         _ => {
             world = BVH::new(&HittableList::new(), 0., 0.);
         }
     }
+    let height: usize = (width as f64 / aspect_ratio) as usize;
 
     // Camera
 
@@ -314,6 +349,9 @@ fn main() {
         0.,
         1.,
     );
+
+    // Create image data
+    let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
 
     // Progress bar UI powered by library `indicatif`
     // You can use indicatif::ProgressStyle to make it more beautiful

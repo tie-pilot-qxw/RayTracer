@@ -1,4 +1,5 @@
 mod aabb;
+pub mod aarect;
 pub mod bvh;
 pub mod hittable_list;
 pub mod moving_sphere;
@@ -6,7 +7,7 @@ pub mod sphere;
 
 use std::sync::Arc;
 
-use crate::material::Material;
+pub use crate::material::Material;
 use crate::Point3;
 use crate::Ray;
 use crate::Vec3;

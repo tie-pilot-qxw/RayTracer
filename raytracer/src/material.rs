@@ -143,6 +143,7 @@ pub struct DiffuseLight {
 }
 
 impl DiffuseLight {
+    #[allow(dead_code)]
     pub fn new(emit: Arc<dyn Texture>) -> Self {
         Self { emit }
     }

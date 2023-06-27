@@ -7,10 +7,13 @@ mod rtweekend;
 mod vec3;
 
 use color::write_color;
-use hittable::{bvh, hittable_list, moving_sphere, HitRecord, Hittable};
+use hittable::{aarect::XyRect, bvh, hittable_list, moving_sphere, HitRecord, Hittable};
 use image::{ImageBuffer, RgbImage};
 use indicatif::ProgressBar;
-use material::texture::{CheckerTexture, ImageTexture, NoiseTexture};
+use material::{
+    texture::{CheckerTexture, ImageTexture, NoiseTexture},
+    DiffuseLight,
+};
 use moving_sphere::MovingSphere;
 use rtweekend::random_double;
 use std::{fs::File, sync::Arc};
@@ -193,6 +196,27 @@ fn earth() -> HittableList {
     objects
 }
 
+fn simple_light() -> HittableList {
+    let mut objects = HittableList::new();
+
+    let pretext = Arc::new(NoiseTexture::new(4.));
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(0., -1000., 0.),
+        1000.,
+        Arc::new(Lambertian::new_texture(pretext.clone())),
+    )));
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(0., 2., 0.),
+        2.,
+        Arc::new(Lambertian::new_texture(pretext)),
+    )));
+
+    let difflight = Arc::new(DiffuseLight::new_color(Color3::ones() * 4.));
+    objects.add(Arc::new(XyRect::new(3., 5., 1., 3., -2., difflight)));
+
+    objects
+}
+
 fn main() {
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -205,7 +229,7 @@ fn main() {
     let height: usize = (width as f64 / aspect_ratio) as usize;
     let path = "output/test.jpg";
     let quality = 60; // From 0 to 100, suggested value: 60
-    let samples_per_pixel: usize = 100;
+    let mut samples_per_pixel: usize = 100;
     let max_depth = 50;
 
     // Create image data
@@ -220,7 +244,7 @@ fn main() {
     let mut aperture = 0.;
     let mut background = Color3::zero();
 
-    match 4 {
+    match 5 {
         1 => {
             world = BVH::new(&random_scene(), 0., 1.);
             lookfrom = Point3::new(13., 2., 3.);
@@ -249,6 +273,14 @@ fn main() {
             lookat = Point3::new(0., 0., 0.);
             vfov = 20.0;
             background = Color3::new(0.7, 0.8, 1.);
+        }
+        5 => {
+            world = BVH::new(&simple_light(), 0., 0.);
+            samples_per_pixel = 400;
+            background = Color3::zero();
+            lookfrom = Point3::new(26., 3., 6.);
+            lookat = Point3::new(0., 2., 0.);
+            vfov = 20.0
         }
         _ => {
             world = BVH::new(&HittableList::new(), 0., 0.);

@@ -221,7 +221,7 @@ fn main() {
     let mut vfov = 40.;
     let mut aperture = 0.;
 
-    match 4 {
+    match 1 {
         1 => {
             world = BVH::new(&random_scene(), 0., 1.);
             lookfrom = Point3::new(13., 2., 3.);

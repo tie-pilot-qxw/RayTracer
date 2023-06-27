@@ -236,7 +236,7 @@ fn main() {
             vfov = 20.0;
         }
         3 => {
-            world = BVH::new(&&two_perlin_spheres(), 0., 0.);
+            world = BVH::new(&two_perlin_spheres(), 0., 0.);
             lookfrom = Point3::new(13., 2., 3.);
             lookat = Point3::new(0., 0., 0.);
             vfov = 20.0;

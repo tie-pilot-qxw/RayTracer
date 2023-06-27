@@ -11,8 +11,8 @@ pub struct Perlin {
 impl Perlin {
     pub fn new() -> Self {
         let mut ranvec = [Vec3::zero(); POINT_COUNT];
-        for i in 0..POINT_COUNT {
-            ranvec[i] = Vec3::random(-1., 1.).unit();
+        for iter in &mut ranvec {
+            *iter = Vec3::random(-1., 1.).unit();
         }
 
         let perm_x = Self::perlin_generate_perm();
@@ -29,6 +29,7 @@ impl Perlin {
 
     fn perlin_generate_perm() -> [usize; POINT_COUNT] {
         let mut p = [0; POINT_COUNT];
+        #[allow(clippy::needless_range_loop)]
         for i in 0..POINT_COUNT {
             p[i] = i;
         }
@@ -40,9 +41,7 @@ impl Perlin {
         for it in 1..n {
             let i = n - it;
             let target = random_int(0, i as isize) as usize;
-            let tmp = p[i];
-            p[i] = p[target];
-            p[target] = tmp;
+            p.swap(i, target);
         }
     }
 
@@ -56,6 +55,7 @@ impl Perlin {
         let k = p.z().floor() as isize;
         let mut c = [[[Vec3::zero(); 2]; 2]; 2];
 
+        #[allow(clippy::needless_range_loop)]
         for di in 0..2 {
             for dj in 0..2 {
                 for dk in 0..2 {
@@ -75,6 +75,7 @@ impl Perlin {
         let vv = v * v * (3. - 2. * v);
         let ww = w * w * (3. - 2. * w);
 
+        #[allow(clippy::needless_range_loop)]
         for i in 0..2 {
             for j in 0..2 {
                 for k in 0..2 {
@@ -97,7 +98,7 @@ impl Perlin {
         for _i in 0..depth {
             accum += weight * self.noise(&temp_p);
             weight *= 0.5;
-            temp_p = temp_p * 2.;
+            temp_p *= 2.;
         }
 
         accum.abs()

@@ -5,7 +5,7 @@ use crate::{
     ray::Ray,
     rtweekend::random_double_unit,
     texture::{SolidColor, Texture},
-    Color3, Vec3,
+    Color3, Point3, Vec3,
 };
 
 pub trait Material {
@@ -16,6 +16,10 @@ pub trait Material {
         attenuation: &mut Color3,
         scattered: &mut Ray,
     ) -> bool;
+
+    fn emitted(&self, _u: f64, _v: f64, _p: &Point3) -> Color3 {
+        Color3::zero()
+    }
 }
 
 pub struct Lambertian {
@@ -133,5 +137,37 @@ impl Material for Dielectric {
         };
         *scattered = Ray::new(rec.p, direction, r_in.time());
         true
+    }
+}
+
+pub struct DiffuseLight {
+    emit: Arc<dyn Texture>,
+}
+
+impl DiffuseLight {
+    pub fn new(emit: Arc<dyn Texture>) -> Self {
+        Self { emit }
+    }
+
+    pub fn new_color(c: Color3) -> Self {
+        Self {
+            emit: Arc::new(SolidColor::new(c)),
+        }
+    }
+}
+
+impl Material for DiffuseLight {
+    fn scatter(
+        &self,
+        _r_in: &Ray,
+        _rec: &HitRecord,
+        _attenuation: &mut Color3,
+        _scattered: &mut Ray,
+    ) -> bool {
+        false
+    }
+
+    fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color3 {
+        self.emit.value(u, v, p)
     }
 }

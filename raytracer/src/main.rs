@@ -41,31 +41,35 @@ fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
 }
 
-fn ray_color(r: Ray, world: &impl Hittable, depth: isize) -> Color3 {
+fn ray_color(r: Ray, world: &impl Hittable, background: Color3, depth: isize) -> Color3 {
     let mut rec = HitRecord::new();
 
     if depth <= 0 {
         return Color3::new(0., 0., 0.);
     }
 
-    if world.hit(&r, 0.000001, INFINITY, &mut rec) {
-        let mut scattered = Ray::new(Vec3::zero(), Vec3::zero(), 0.);
-        let mut attenuation = Color3::zero();
-        if rec
-            .mat_ptr
-            .clone()
-            .unwrap()
-            .scatter(&r, &rec, &mut attenuation, &mut scattered)
-        {
-            return Vec3::elemul(attenuation, ray_color(scattered, world, depth - 1));
-        } else {
-            return Color3::zero();
-        }
+    if !world.hit(&r, 0.000001, INFINITY, &mut rec) {
+        return background;
     }
 
-    let unit_direction = r.direction().unit();
-    let t: f64 = 0.5 * (unit_direction.y() + 1.0);
-    (1.0 - t) * Color3::ones() + t * Color3::new(0.5, 0.7, 1.0)
+    let mut scattered = Ray::new(Vec3::zero(), Vec3::zero(), 0.);
+    let mut attenuation = Color3::zero();
+    let emitted = rec.mat_ptr.clone().unwrap().emitted(rec.u, rec.v, &rec.p);
+
+    if rec
+        .mat_ptr
+        .clone()
+        .unwrap()
+        .scatter(&r, &rec, &mut attenuation, &mut scattered)
+    {
+        emitted
+            + Vec3::elemul(
+                attenuation,
+                ray_color(scattered, world, background, depth - 1),
+            )
+    } else {
+        emitted
+    }
 }
 
 fn random_scene() -> HittableList {
@@ -220,6 +224,7 @@ fn main() {
     let mut lookat = Point3::zero();
     let mut vfov = 40.;
     let mut aperture = 0.;
+    let mut background = Color3::zero();
 
     match 4 {
         1 => {
@@ -228,24 +233,28 @@ fn main() {
             lookat = Point3::new(0., 0., 0.);
             vfov = 20.0;
             aperture = 0.1;
+            background = Color3::new(0.7, 0.8, 1.);
         }
         2 => {
             world = BVH::new(&two_spheres(), 0., 0.);
             lookfrom = Point3::new(13., 2., 3.);
             lookat = Point3::new(0., 0., 0.);
             vfov = 20.0;
+            background = Color3::new(0.7, 0.8, 1.);
         }
         3 => {
             world = BVH::new(&two_perlin_spheres(), 0., 0.);
             lookfrom = Point3::new(13., 2., 3.);
             lookat = Point3::new(0., 0., 0.);
             vfov = 20.0;
+            background = Color3::new(0.7, 0.8, 1.);
         }
         4 => {
             world = BVH::new(&earth(), 0., 0.);
             lookfrom = Point3::new(13., 2., 3.);
             lookat = Point3::new(0., 0., 0.);
             vfov = 20.0;
+            background = Color3::new(0.7, 0.8, 1.);
         }
         _ => {
             world = BVH::new(&HittableList::new(), 0., 0.);
@@ -285,7 +294,7 @@ fn main() {
                 let u = (i as f64 + random_double_unit()) / (width - 1) as f64;
                 let v = (j as f64 + random_double_unit()) / (height - 1) as f64;
                 let r = cam.get_ray(u, v);
-                color += ray_color(r, &world, max_depth);
+                color += ray_color(r, &world, background, max_depth);
             }
             write_color(color, samples_per_pixel, &mut img, i, height - j - 1);
             bar.inc(1);

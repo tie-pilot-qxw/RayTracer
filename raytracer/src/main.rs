@@ -24,6 +24,7 @@ pub use vec3::Vec3;
 pub type Point3 = Vec3;
 pub type Color3 = Vec3;
 use bvh::BVH;
+use hittable::boxs::Boxs;
 use hittable_list::HittableList;
 use ray::Ray;
 use std::f64::INFINITY;
@@ -251,7 +252,25 @@ fn cornell_box() -> HittableList {
         555.,
         white.clone(),
     )));
-    objects.add(Arc::new(XyRect::new(0., 555., 0., 555., 555., white)));
+    objects.add(Arc::new(XyRect::new(
+        0.,
+        555.,
+        0.,
+        555.,
+        555.,
+        white.clone(),
+    )));
+
+    objects.add(Arc::new(Boxs::new(
+        &Point3::new(130., 0., 65.),
+        &Point3::new(295., 165., 230.),
+        white.clone(),
+    )));
+    objects.add(Arc::new(Boxs::new(
+        &Point3::new(265., 0., 295.),
+        &Point3::new(430., 330., 460.),
+        white,
+    )));
 
     objects
 }

@@ -463,7 +463,7 @@ fn final_scene() -> HittableList {
 }
 
 fn main() {
-    const THREAD_NUM: usize = 4;
+    const THREAD_NUM: usize = 5;
 
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();

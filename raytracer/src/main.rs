@@ -463,7 +463,7 @@ fn final_scene() -> HittableList {
 }
 
 fn main() {
-    const THREAD_NUM: usize = 3;
+    const THREAD_NUM: usize = 4;
 
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -487,7 +487,7 @@ fn main() {
     let mut aperture = 0.;
     let mut background = Color3::zero();
 
-    match 1 {
+    match 8 {
         1 => {
             world = BVH::new(&random_scene(), 0., 1.);
             lookfrom = Point3::new(13., 2., 3.);

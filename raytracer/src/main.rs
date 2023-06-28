@@ -14,7 +14,7 @@ use hittable::{
     hittable_list, moving_sphere, HitRecord, Hittable, RotateY, Translate,
 };
 use image::{ImageBuffer, RgbImage};
-use indicatif::ProgressBar;
+use indicatif::{MultiProgress, ProgressBar};
 use material::{
     texture::{CheckerTexture, ImageTexture, NoiseTexture},
     DiffuseLight,
@@ -463,7 +463,7 @@ fn final_scene() -> HittableList {
 }
 
 fn main() {
-    const THREAD_NUM: usize = 6;
+    const THREAD_NUM: usize = 4;
 
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -586,47 +586,56 @@ fn main() {
     // Progress bar UI powered by library `indicatif`
     // You can use indicatif::ProgressStyle to make it more beautiful
     // You can also use indicatif::MultiProgress in multi-threading to show progress of each thread
-    let bar = if is_ci {
-        ProgressBar::hidden()
-    } else {
-        ProgressBar::new((height * width) as u64)
-    };
+    let bar_collection = MultiProgress::new();
 
-    for j in 0..height {
-        for i in 0..width {
-            let mut color = Color3::zero();
-            let (tx, rx) = mpsc::channel();
+    let mut ans = Vec::new();
+    ans.resize(width, Vec::new());
+    for iter in &mut ans {
+        iter.resize(height, Color3::zero());
+    }
 
-            for _k in 0..THREAD_NUM {
-                let camm = cam.clone();
-                let world_t = world.clone();
-                let tx_k = tx.clone();
-                thread::spawn(move || {
-                    let mut ans_t = Color3::zero();
+    let (tx, rx) = mpsc::channel();
+    for _k in 0..THREAD_NUM {
+        let camm = cam.clone();
+        let world_t = world.clone();
+        let tx_k = tx.clone();
+        let mut ans_t = ans.clone();
+        let bar = bar_collection.add(if is_ci {
+            ProgressBar::hidden()
+        } else {
+            ProgressBar::new((height * width) as u64)
+        });
+        thread::spawn(move || {
+            for (i, iter) in ans_t.iter_mut().enumerate().take(width) {
+                for (j, jter) in iter.iter_mut().enumerate().take(height) {
                     for _s in 0..samples_per_pixel / THREAD_NUM {
                         let u = (i as f64 + random_double_unit()) / (width - 1) as f64;
                         let v = (j as f64 + random_double_unit()) / (height - 1) as f64;
                         let r = camm.get_ray(u, v);
-                        ans_t += ray_color(r, world_t.clone(), background, max_depth);
+                        *jter += ray_color(r, world_t.clone(), background, max_depth);
                     }
-                    tx_k.send(ans_t).unwrap();
-                });
+                    bar.inc(1);
+                }
             }
-            drop(tx);
-
-            for received in rx {
-                color += received;
+            // Finish progress bar
+            bar.finish();
+            tx_k.send(ans_t).unwrap();
+        });
+    }
+    drop(tx);
+    for received in rx {
+        for i in 0..width {
+            for j in 0..height {
+                ans[i][j] += received[i][j];
             }
-
-            write_color(color, samples_per_pixel, &mut img, i, height - j - 1);
-            bar.inc(1);
         }
     }
 
-    // Finish progress bar
-    bar.finish();
-
-    //world.clear();
+    for (i, iter) in ans.iter().enumerate().take(width) {
+        for (j, jter) in iter.iter().enumerate().take(height) {
+            write_color(*jter, samples_per_pixel, &mut img, i, height - j - 1);
+        }
+    }
 
     // Output image to file
     println!("Ouput image as \"{}\"\n Author: {}", path, AUTHOR);

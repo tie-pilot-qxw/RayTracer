@@ -21,7 +21,7 @@ pub trait Material {
 }
 
 pub struct Lambertian {
-    albedo: Arc<dyn Texture>,
+    albedo: Arc<dyn Texture + Send + Sync>,
 }
 
 impl Lambertian {
@@ -31,7 +31,7 @@ impl Lambertian {
         }
     }
 
-    pub fn new_texture(albedo: Arc<dyn Texture>) -> Self {
+    pub fn new_texture(albedo: Arc<dyn Texture + Send + Sync>) -> Self {
         Self { albedo }
     }
 }
@@ -139,12 +139,12 @@ impl Material for Dielectric {
 }
 
 pub struct DiffuseLight {
-    emit: Arc<dyn Texture>,
+    emit: Arc<dyn Texture + Send + Sync>,
 }
 
 impl DiffuseLight {
     #[allow(dead_code)]
-    pub fn new(emit: Arc<dyn Texture>) -> Self {
+    pub fn new(emit: Arc<dyn Texture + Send + Sync>) -> Self {
         Self { emit }
     }
 
@@ -172,7 +172,7 @@ impl Material for DiffuseLight {
 }
 
 pub struct Isotropic {
-    albedo: Arc<dyn Texture>,
+    albedo: Arc<dyn Texture + Send + Sync>,
 }
 
 impl Isotropic {
@@ -182,7 +182,7 @@ impl Isotropic {
         }
     }
 
-    pub fn new_texture(albedo: Arc<dyn Texture>) -> Self {
+    pub fn new_texture(albedo: Arc<dyn Texture + Send + Sync>) -> Self {
         Self { albedo }
     }
 }

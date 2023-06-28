@@ -5,7 +5,7 @@ use crate::{Point3, Vec3};
 use super::{aabb::AABB, HitRecord, Hittable, Material};
 
 pub struct XyRect {
-    mp: Arc<dyn Material>,
+    mp: Arc<dyn Material + Send + Sync>,
     x0: f64,
     x1: f64,
     y0: f64,
@@ -14,7 +14,14 @@ pub struct XyRect {
 }
 
 impl XyRect {
-    pub fn new(x0: f64, x1: f64, y0: f64, y1: f64, k: f64, mp: Arc<dyn Material>) -> Self {
+    pub fn new(
+        x0: f64,
+        x1: f64,
+        y0: f64,
+        y1: f64,
+        k: f64,
+        mp: Arc<dyn Material + Send + Sync>,
+    ) -> Self {
         Self {
             mp,
             x0,
@@ -59,7 +66,7 @@ impl Hittable for XyRect {
 }
 
 pub struct XzRect {
-    mp: Arc<dyn Material>,
+    mp: Arc<dyn Material + Sync + Send>,
     x0: f64,
     x1: f64,
     z0: f64,
@@ -68,7 +75,14 @@ pub struct XzRect {
 }
 
 impl XzRect {
-    pub fn new(x0: f64, x1: f64, z0: f64, z1: f64, k: f64, mp: Arc<dyn Material>) -> Self {
+    pub fn new(
+        x0: f64,
+        x1: f64,
+        z0: f64,
+        z1: f64,
+        k: f64,
+        mp: Arc<dyn Material + Sync + Send>,
+    ) -> Self {
         Self {
             mp,
             x0,
@@ -113,7 +127,7 @@ impl Hittable for XzRect {
 }
 
 pub struct YzRect {
-    mp: Arc<dyn Material>,
+    mp: Arc<dyn Material + Sync + Send>,
     z0: f64,
     z1: f64,
     y0: f64,
@@ -122,7 +136,14 @@ pub struct YzRect {
 }
 
 impl YzRect {
-    pub fn new(y0: f64, y1: f64, z0: f64, z1: f64, k: f64, mp: Arc<dyn Material>) -> Self {
+    pub fn new(
+        y0: f64,
+        y1: f64,
+        z0: f64,
+        z1: f64,
+        k: f64,
+        mp: Arc<dyn Material + Sync + Send>,
+    ) -> Self {
         Self {
             mp,
             z0,

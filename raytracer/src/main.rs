@@ -21,7 +21,11 @@ use material::{
 };
 use moving_sphere::MovingSphere;
 use rtweekend::random_double;
-use std::{fs::File, sync::Arc};
+use std::{
+    fs::File,
+    sync::{mpsc, Arc},
+    thread,
+};
 pub use vec3::Vec3;
 pub type Point3 = Vec3;
 pub type Color3 = Vec3;
@@ -44,7 +48,12 @@ fn is_ci() -> bool {
     option_env!("CI").unwrap_or_default() == "true"
 }
 
-fn ray_color(r: Ray, world: &impl Hittable, background: Color3, depth: isize) -> Color3 {
+fn ray_color(
+    r: Ray,
+    world: Arc<dyn Hittable + Send + Sync>,
+    background: Color3,
+    depth: isize,
+) -> Color3 {
     let mut rec = HitRecord::new();
 
     if depth <= 0 {
@@ -263,7 +272,7 @@ fn cornell_box() -> HittableList {
         white.clone(),
     )));
 
-    let mut box1: Arc<dyn Hittable> = Arc::new(Boxes::new(
+    let mut box1: Arc<dyn Hittable + Send + Sync> = Arc::new(Boxes::new(
         &Point3::zero(),
         &Point3::new(165., 330., 165.),
         white.clone(),
@@ -272,7 +281,7 @@ fn cornell_box() -> HittableList {
     box1 = Arc::new(Translate::new(box1, Vec3::new(265., 0., 295.)));
     objects.add(box1);
 
-    let mut box2: Arc<dyn Hittable> = Arc::new(Boxes::new(
+    let mut box2: Arc<dyn Hittable + Send + Sync> = Arc::new(Boxes::new(
         &Point3::zero(),
         &Point3::new(165., 165., 165.),
         white,
@@ -313,7 +322,7 @@ fn cornell_smoke() -> HittableList {
         white.clone(),
     )));
 
-    let mut box1: Arc<dyn Hittable> = Arc::new(Boxes::new(
+    let mut box1: Arc<dyn Hittable + Send + Sync> = Arc::new(Boxes::new(
         &Point3::zero(),
         &Point3::new(165., 330., 165.),
         white.clone(),
@@ -321,7 +330,7 @@ fn cornell_smoke() -> HittableList {
     box1 = Arc::new(RotateY::new(box1, 15.));
     box1 = Arc::new(Translate::new(box1, Vec3::new(265., 0., 295.)));
 
-    let mut box2: Arc<dyn Hittable> = Arc::new(Boxes::new(
+    let mut box2: Arc<dyn Hittable + Send + Sync> = Arc::new(Boxes::new(
         &Point3::zero(),
         &Point3::new(165., 165., 165.),
         white,
@@ -454,6 +463,8 @@ fn final_scene() -> HittableList {
 }
 
 fn main() {
+    const THREAD_NUM: usize = 4;
+
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
 
@@ -566,6 +577,9 @@ fn main() {
         1.,
     );
 
+    samples_per_pixel = (samples_per_pixel / THREAD_NUM + 1) * THREAD_NUM;
+    let world = Arc::new(world);
+
     // Create image data
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
 
@@ -581,12 +595,29 @@ fn main() {
     for j in 0..height {
         for i in 0..width {
             let mut color = Color3::zero();
-            for _s in 0..samples_per_pixel {
-                let u = (i as f64 + random_double_unit()) / (width - 1) as f64;
-                let v = (j as f64 + random_double_unit()) / (height - 1) as f64;
-                let r = cam.get_ray(u, v);
-                color += ray_color(r, &world, background, max_depth);
+            let (tx, rx) = mpsc::channel();
+
+            for _k in 0..THREAD_NUM {
+                let camm = cam.clone();
+                let world_t = world.clone();
+                let tx_k = tx.clone();
+                thread::spawn(move || {
+                    let mut ans_t = Color3::zero();
+                    for _s in 0..samples_per_pixel / THREAD_NUM {
+                        let u = (i as f64 + random_double_unit()) / (width - 1) as f64;
+                        let v = (j as f64 + random_double_unit()) / (height - 1) as f64;
+                        let r = camm.get_ray(u, v);
+                        ans_t += ray_color(r, world_t.clone(), background, max_depth);
+                    }
+                    tx_k.send(ans_t).unwrap();
+                });
             }
+            drop(tx);
+
+            for received in rx {
+                color += received;
+            }
+
             write_color(color, samples_per_pixel, &mut img, i, height - j - 1);
             bar.inc(1);
         }

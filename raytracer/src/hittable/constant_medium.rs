@@ -11,14 +11,18 @@ use std::{
 use super::{HitRecord, Hittable, Material};
 
 pub struct ConstantMedium {
-    boundary: Arc<dyn Hittable>,
-    phase_function: Arc<dyn Material>,
+    boundary: Arc<dyn Hittable + Send + Sync>,
+    phase_function: Arc<dyn Material + Sync + Send>,
     neg_inv_density: f64,
 }
 
 impl ConstantMedium {
     #[allow(dead_code)]
-    pub fn new_texture(boundary: Arc<dyn Hittable>, d: f64, a: Arc<dyn Texture>) -> Self {
+    pub fn new_texture(
+        boundary: Arc<dyn Hittable + Send + Sync>,
+        d: f64,
+        a: Arc<dyn Texture + Send + Sync>,
+    ) -> Self {
         Self {
             boundary,
             phase_function: Arc::new(Isotropic::new_texture(a)),
@@ -26,7 +30,7 @@ impl ConstantMedium {
         }
     }
 
-    pub fn new_color(boundary: Arc<dyn Hittable>, d: f64, c: Color3) -> Self {
+    pub fn new_color(boundary: Arc<dyn Hittable + Send + Sync>, d: f64, c: Color3) -> Self {
         Self {
             boundary,
             phase_function: (Arc::new(Isotropic::new_color(c))),

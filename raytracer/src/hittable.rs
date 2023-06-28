@@ -23,7 +23,7 @@ pub struct HitRecord {
     pub t: f64,
     pub u: f64,
     pub v: f64,
-    pub mat_ptr: Option<Arc<dyn Material>>,
+    pub mat_ptr: Option<Arc<dyn Material + Send + Sync>>,
     pub front_face: bool,
 }
 
@@ -56,12 +56,12 @@ pub trait Hittable {
 }
 
 pub struct Translate {
-    ptr: Arc<dyn Hittable>,
+    ptr: Arc<dyn Hittable + Send + Sync>,
     offset: Vec3,
 }
 
 impl Translate {
-    pub fn new(ptr: Arc<dyn Hittable>, offset: Vec3) -> Self {
+    pub fn new(ptr: Arc<dyn Hittable + Send + Sync>, offset: Vec3) -> Self {
         Self { ptr, offset }
     }
 }
@@ -94,7 +94,7 @@ impl Hittable for Translate {
 }
 
 pub struct RotateY {
-    ptr: Arc<dyn Hittable>,
+    ptr: Arc<dyn Hittable + Send + Sync>,
     sin_theta: f64,
     cos_theta: f64,
     hasbox: bool,
@@ -102,7 +102,7 @@ pub struct RotateY {
 }
 
 impl RotateY {
-    pub fn new(ptr: Arc<dyn Hittable>, angle: f64) -> Self {
+    pub fn new(ptr: Arc<dyn Hittable + Send + Sync>, angle: f64) -> Self {
         let radians = degrees_to_radius(angle);
         let sin_theta = radians.sin();
         let cos_theta = radians.cos();

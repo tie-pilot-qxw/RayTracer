@@ -10,7 +10,7 @@ pub struct MovingSphere {
     time0: f64,
     time1: f64,
     radius: f64,
-    mat_ptr: Arc<dyn Material>,
+    mat_ptr: Arc<dyn Material + Sync + Send>,
 }
 
 impl MovingSphere {
@@ -20,7 +20,7 @@ impl MovingSphere {
         time0: f64,
         time1: f64,
         radius: f64,
-        mat_ptr: Arc<dyn Material>,
+        mat_ptr: Arc<dyn Material + Sync + Send>,
     ) -> Self {
         Self {
             center0,

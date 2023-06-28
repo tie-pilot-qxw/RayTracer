@@ -12,8 +12,8 @@ use crate::{hittable::hittable_list::HittableList, hittable::Hittable};
 
 #[allow(clippy::upper_case_acronyms)]
 pub struct BVH {
-    left: Arc<dyn Hittable>,
-    right: Arc<dyn Hittable>,
+    left: Arc<dyn Hittable + Send + Sync>,
+    right: Arc<dyn Hittable + Send + Sync>,
     tree_box: AABB,
 }
 
@@ -22,7 +22,7 @@ impl BVH {
         Self::new_p(list.objects.as_slice(), time0, time1)
     }
 
-    fn new_p(src_objects: &[Arc<dyn Hittable>], time0: f64, time1: f64) -> Self {
+    fn new_p(src_objects: &[Arc<dyn Hittable + Send + Sync>], time0: f64, time1: f64) -> Self {
         let mut objects = src_objects.to_vec();
 
         let axis = random_int(0, 2);
@@ -35,8 +35,8 @@ impl BVH {
         };
 
         let object_span = objects.len();
-        let left: Arc<dyn Hittable>;
-        let right: Arc<dyn Hittable>;
+        let left: Arc<dyn Hittable + Send + Sync>;
+        let right: Arc<dyn Hittable + Send + Sync>;
         if object_span == 0 {
             left = Arc::new(Sphere::new(
                 Point3::zero(),
@@ -81,8 +81,8 @@ impl BVH {
     }
 
     fn box_compare(
-        a: &Arc<dyn Hittable>,
-        b: &Arc<dyn Hittable>,
+        a: &Arc<dyn Hittable + Send + Sync>,
+        b: &Arc<dyn Hittable + Send + Sync>,
         axis: usize,
         time0: f64,
         time1: f64,
@@ -98,8 +98,8 @@ impl BVH {
     }
 
     fn box_x_compare(
-        a: &Arc<dyn Hittable>,
-        b: &Arc<dyn Hittable>,
+        a: &Arc<dyn Hittable + Send + Sync>,
+        b: &Arc<dyn Hittable + Send + Sync>,
         time0: f64,
         time1: f64,
     ) -> Option<Ordering> {
@@ -107,8 +107,8 @@ impl BVH {
     }
 
     fn box_y_compare(
-        a: &Arc<dyn Hittable>,
-        b: &Arc<dyn Hittable>,
+        a: &Arc<dyn Hittable + Send + Sync>,
+        b: &Arc<dyn Hittable + Send + Sync>,
         time0: f64,
         time1: f64,
     ) -> Option<Ordering> {
@@ -116,8 +116,8 @@ impl BVH {
     }
 
     fn box_z_compare(
-        a: &Arc<dyn Hittable>,
-        b: &Arc<dyn Hittable>,
+        a: &Arc<dyn Hittable + Send + Sync>,
+        b: &Arc<dyn Hittable + Send + Sync>,
         time0: f64,
         time1: f64,
     ) -> Option<Ordering> {
@@ -142,4 +142,11 @@ impl Hittable for BVH {
 
         hit_left || hit_right
     }
+}
+
+#[test]
+fn test_sync() {
+    fn assert_syn<T: Sync>(_: &T) {}
+    let temp = BVH::new(&HittableList::new(), 0., 0.);
+    assert_syn(&temp);
 }

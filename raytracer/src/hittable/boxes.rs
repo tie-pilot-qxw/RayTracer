@@ -16,7 +16,7 @@ pub struct Boxes {
 }
 
 impl Boxes {
-    pub fn new(p0: &Point3, p1: &Point3, ptr: Arc<dyn Material>) -> Self {
+    pub fn new(p0: &Point3, p1: &Point3, ptr: Arc<dyn Material + Sync + Send>) -> Self {
         let mut sides = HittableList::new();
         sides.add(Arc::new(XyRect::new(
             p0.x(),

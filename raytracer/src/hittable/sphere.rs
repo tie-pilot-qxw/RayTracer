@@ -10,11 +10,11 @@ use crate::Vec3;
 pub struct Sphere {
     center: Point3,
     radius: f64,
-    mat_ptr: Arc<dyn Material>,
+    mat_ptr: Arc<dyn Material + Sync + Send>,
 }
 
 impl Sphere {
-    pub fn new(center: Point3, radius: f64, mat_ptr: Arc<dyn Material>) -> Self {
+    pub fn new(center: Point3, radius: f64, mat_ptr: Arc<dyn Material + Send + Sync>) -> Self {
         Self {
             center,
             radius,

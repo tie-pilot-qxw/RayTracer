@@ -7,11 +7,11 @@ use crate::{
 };
 
 pub struct HittableList {
-    pub objects: Vec<Arc<dyn Hittable>>,
+    pub objects: Vec<Arc<dyn Hittable + Send + Sync>>,
 }
 
 impl HittableList {
-    pub fn add(&mut self, object: Arc<dyn Hittable>) {
+    pub fn add(&mut self, object: Arc<dyn Hittable + Send + Sync>) {
         self.objects.push(object);
     }
 

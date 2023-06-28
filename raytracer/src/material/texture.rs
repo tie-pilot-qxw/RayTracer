@@ -28,13 +28,13 @@ impl Texture for SolidColor {
 }
 
 pub struct CheckerTexture {
-    odd: Arc<dyn Texture>,
-    even: Arc<dyn Texture>,
+    odd: Arc<dyn Texture + Send + Sync>,
+    even: Arc<dyn Texture + Send + Sync>,
 }
 
 impl CheckerTexture {
     #[allow(dead_code)]
-    pub fn new(even: Arc<dyn Texture>, odd: Arc<dyn Texture>) -> Self {
+    pub fn new(even: Arc<dyn Texture + Send + Sync>, odd: Arc<dyn Texture + Send + Sync>) -> Self {
         Self { odd, even }
     }
 

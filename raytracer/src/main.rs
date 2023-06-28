@@ -487,7 +487,7 @@ fn main() {
     let mut aperture = 0.;
     let mut background = Color3::zero();
 
-    match 8 {
+    match 1 {
         1 => {
             world = BVH::new(&random_scene(), 0., 1.);
             lookfrom = Point3::new(13., 2., 3.);

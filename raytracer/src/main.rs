@@ -548,7 +548,7 @@ fn main() {
             world = BVH::new(&final_scene(), 0., 1.);
             aspect_ratio = 1.;
             width = 800;
-            samples_per_pixel = 10000;
+            samples_per_pixel = 1000;
             background = Color3::zero();
             lookfrom = Point3::new(478., 278., -600.);
             lookat = Point3::new(278., 278., 0.);

@@ -52,16 +52,20 @@ impl Material for Lambertian {
         scattered: &mut Ray,
         pdf: &mut f64,
     ) -> bool {
-        let mut scatter_direction = rec.normal + Vec3::random_unit_vector();
+        //let mut scatter_direction = rec.normal + Vec3::random_unit_vector();
+        let direction = Vec3::random_in_hemisphere(rec.normal);
 
-        // Catch degenerate scatter direction
-        if scatter_direction.near_zero() {
-            scatter_direction = rec.normal;
-        }
+        // // Catch degenerate scatter direction
+        // if scatter_direction.near_zero() {
+        //     scatter_direction = rec.normal;
+        // }
 
-        *scattered = Ray::new(rec.p, scatter_direction, r_in.time());
+        // *scattered = Ray::new(rec.p, scatter_direction, r_in.time());
+        *scattered = Ray::new(rec.p, direction.unit(), r_in.time());
+
         *albedo = self.albedo.value(rec.u, rec.v, &rec.p);
-        *pdf = rec.normal * scattered.direction() / PI;
+        //*pdf = rec.normal * scattered.direction() / PI;
+        *pdf = 0.5 / PI;
         true
     }
 

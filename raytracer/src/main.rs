@@ -65,20 +65,24 @@ fn ray_color(
     }
 
     let mut scattered = Ray::new(Vec3::zero(), Vec3::zero(), 0.);
-    let mut attenuation = Color3::zero();
+    let mut albedo = Color3::zero();
     let emitted = rec.mat_ptr.clone().unwrap().emitted(rec.u, rec.v, &rec.p);
+    let mut pdf = 0.;
 
     if rec
         .mat_ptr
         .clone()
         .unwrap()
-        .scatter(&r, &rec, &mut attenuation, &mut scattered)
+        .scatter(&r, &rec, &mut albedo, &mut scattered, &mut pdf)
     {
         emitted
-            + Vec3::elemul(
-                attenuation,
-                ray_color(scattered, world, background, depth - 1),
-            )
+            + Vec3::elemul(albedo, ray_color(scattered, world, background, depth - 1))
+                * rec
+                    .mat_ptr
+                    .clone()
+                    .unwrap()
+                    .scattering_pdf(&r, &rec, &scattered)
+                / pdf
     } else {
         emitted
     }
@@ -487,7 +491,7 @@ fn main() {
     let mut aperture = 0.;
     let mut background = Color3::zero();
 
-    match 8 {
+    match 6 {
         1 => {
             world = BVH::new(&random_scene(), 0., 1.);
             lookfrom = Point3::new(13., 2., 3.);
@@ -548,7 +552,7 @@ fn main() {
             world = BVH::new(&final_scene(), 0., 1.);
             aspect_ratio = 1.;
             width = 800;
-            samples_per_pixel = 1000;
+            samples_per_pixel = 10000;
             background = Color3::zero();
             lookfrom = Point3::new(478., 278., -600.);
             lookat = Point3::new(278., 278., 0.);

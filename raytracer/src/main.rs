@@ -25,6 +25,7 @@ use std::{
     fs::File,
     sync::{mpsc, Arc},
     thread,
+    time::SystemTime,
 };
 pub use vec3::Vec3;
 pub type Point3 = Vec3;
@@ -463,7 +464,7 @@ fn final_scene() -> HittableList {
 }
 
 fn main() {
-    const THREAD_NUM: usize = 4;
+    const THREAD_NUM: usize = 31;
 
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -548,7 +549,7 @@ fn main() {
             world = BVH::new(&final_scene(), 0., 1.);
             aspect_ratio = 1.;
             width = 800;
-            samples_per_pixel = 10000;
+            samples_per_pixel = 100;
             background = Color3::zero();
             lookfrom = Point3::new(478., 278., -600.);
             lookat = Point3::new(278., 278., 0.);
@@ -580,8 +581,18 @@ fn main() {
     samples_per_pixel = (samples_per_pixel / THREAD_NUM + 1) * THREAD_NUM;
     let world = Arc::new(world);
 
+    // print some information
+    println!("Image size: {}✖️{}", height, width);
+    println!("JPEG quality: {quality}");
+    println!("Samples per pixel: {}", samples_per_pixel);
+    println!("Reflection max depth: {}", max_depth);
+    println!("Threads number: {}", THREAD_NUM);
+
     // Create image data
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
+
+    // Start the timer
+    let sy_time = SystemTime::now();
 
     // Progress bar UI powered by library `indicatif`
     // You can use indicatif::ProgressStyle to make it more beautiful
@@ -636,6 +647,9 @@ fn main() {
             write_color(*jter, samples_per_pixel, &mut img, i, height - j - 1);
         }
     }
+
+    // Stop timer
+    println!("Time used: {}", sy_time.elapsed().unwrap().as_secs_f64());
 
     // Output image to file
     println!("Ouput image as \"{}\"\n Author: {}", path, AUTHOR);

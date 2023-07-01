@@ -80,7 +80,7 @@ fn ray_color(
         let mut to_light = on_light - rec.p;
         let distance_squared = to_light.squared_length();
         to_light = to_light.unit();
-
+        
         if to_light * rec.normal < 0. {
             return emitted;
         }
@@ -93,7 +93,7 @@ fn ray_color(
 
         pdf = distance_squared / (light_cosine * light_area);
         scattered = Ray::new(rec.p, to_light, r.time());
-
+        
         emitted
             + Vec3::elemul(albedo, ray_color(scattered, world, background, depth - 1))
                 * rec

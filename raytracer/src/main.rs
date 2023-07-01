@@ -2,6 +2,7 @@ mod camera;
 mod color;
 mod hittable;
 mod material;
+mod onb;
 mod ray;
 mod rtweekend;
 mod vec3;

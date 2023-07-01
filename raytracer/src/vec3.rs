@@ -58,7 +58,7 @@ impl Vec3 {
     }
 
     pub fn unit(&self) -> Self {
-        if self.length() == (0 as f64) {
+        if self.length() == (0_f64) {
             panic!("Vector length is zero!");
         }
         self / self.length()

@@ -12,7 +12,7 @@ use hittable::{
     aarect::{XyRect, XzRect, YzRect},
     bvh,
     constant_medium::ConstantMedium,
-    hittable_list, moving_sphere, HitRecord, Hittable, RotateY, Translate,
+    hittable_list, moving_sphere, FlipFace, HitRecord, Hittable, RotateY, Translate,
 };
 use image::{ImageBuffer, RgbImage};
 use indicatif::{MultiProgress, ProgressBar};
@@ -67,7 +67,11 @@ fn ray_color(
 
     let mut scattered = Ray::new(Vec3::zero(), Vec3::zero(), 0.);
     let mut albedo = Color3::zero();
-    let emitted = rec.mat_ptr.clone().unwrap().emitted(rec.u, rec.v, &rec.p);
+    let emitted = rec
+        .mat_ptr
+        .clone()
+        .unwrap()
+        .emitted(&r, &rec, rec.u, rec.v, &rec.p);
     let mut pdf = 0.;
 
     if rec
@@ -80,7 +84,7 @@ fn ray_color(
         let mut to_light = on_light - rec.p;
         let distance_squared = to_light.squared_length();
         to_light = to_light.unit();
-        
+
         if to_light * rec.normal < 0. {
             return emitted;
         }
@@ -93,7 +97,7 @@ fn ray_color(
 
         pdf = distance_squared / (light_cosine * light_area);
         scattered = Ray::new(rec.p, to_light, r.time());
-        
+
         emitted
             + Vec3::elemul(albedo, ray_color(scattered, world, background, depth - 1))
                 * rec
@@ -276,7 +280,9 @@ fn cornell_box() -> HittableList {
 
     objects.add(Arc::new(YzRect::new(0., 555., 0., 555., 555., green)));
     objects.add(Arc::new(YzRect::new(0., 555., 0., 555., 0., red)));
-    objects.add(Arc::new(XzRect::new(213., 343., 227., 332., 554., light)));
+    objects.add(Arc::new(FlipFace::new(Arc::new(XzRect::new(
+        213., 343., 227., 332., 554., light,
+    )))));
     objects.add(Arc::new(XzRect::new(0., 555., 0., 555., 0., white.clone())));
     objects.add(Arc::new(XzRect::new(
         0.,

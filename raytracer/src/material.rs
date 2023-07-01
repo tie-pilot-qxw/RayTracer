@@ -28,7 +28,7 @@ pub trait Material {
         0.
     }
 
-    fn emitted(&self, _u: f64, _v: f64, _p: &Point3) -> Color3 {
+    fn emitted(&self, _r_in: &Ray, _rec: &HitRecord, _u: f64, _v: f64, _p: &Point3) -> Color3 {
         Color3::zero()
     }
 }
@@ -188,8 +188,12 @@ impl Material for DiffuseLight {
         false
     }
 
-    fn emitted(&self, u: f64, v: f64, p: &Point3) -> Color3 {
-        self.emit.value(u, v, p)
+    fn emitted(&self, _r_in: &Ray, rec: &HitRecord, u: f64, v: f64, p: &Point3) -> Color3 {
+        if rec.front_face {
+            self.emit.value(u, v, p)
+        } else {
+            Color3::zero()
+        }
     }
 }
 

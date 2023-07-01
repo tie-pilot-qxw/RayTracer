@@ -76,6 +76,24 @@ fn ray_color(
         .unwrap()
         .scatter(&r, &rec, &mut albedo, &mut scattered, &mut pdf)
     {
+        let on_light = Point3::new(random_double(213., 343.), 554., random_double(227., 332.));
+        let mut to_light = on_light - rec.p;
+        let distance_squared = to_light.squared_length();
+        to_light = to_light.unit();
+
+        if to_light * rec.normal < 0. {
+            return emitted;
+        }
+
+        let light_area = (343. - 213.) * (332. - 227.);
+        let light_cosine = to_light.y().abs();
+        if light_cosine < 0.000001 {
+            return emitted;
+        }
+
+        pdf = distance_squared / (light_cosine * light_area);
+        scattered = Ray::new(rec.p, to_light, r.time());
+
         emitted
             + Vec3::elemul(albedo, ray_color(scattered, world, background, depth - 1))
                 * rec

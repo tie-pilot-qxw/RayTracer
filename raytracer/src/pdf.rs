@@ -1,6 +1,11 @@
 use std::{f64::consts::PI, sync::Arc};
 
-use crate::{hittable::Hittable, onb::Onb, rtweekend::random_cosine_direction, Point3, Vec3};
+use crate::{
+    hittable::Hittable,
+    onb::Onb,
+    rtweekend::{random_cosine_direction, random_double_unit},
+    Point3, Vec3,
+};
 
 pub trait Pdf {
     fn value(&self, direction: &Vec3) -> f64;
@@ -52,5 +57,29 @@ impl Pdf for HittablePdf {
 
     fn value(&self, direction: &Vec3) -> f64 {
         self.ptr.pdf_value(&self.o, direction)
+    }
+}
+
+pub struct MixturePdf {
+    p: [Arc<dyn Pdf + Send + Sync>; 2],
+}
+
+impl MixturePdf {
+    pub fn new(p0: Arc<dyn Pdf + Send + Sync>, p1: Arc<dyn Pdf + Send + Sync>) -> Self {
+        Self { p: ([p0, p1]) }
+    }
+}
+
+impl Pdf for MixturePdf {
+    fn generate(&self) -> Vec3 {
+        if random_double_unit() < 0.5 {
+            self.p[0].generate()
+        } else {
+            self.p[1].generate()
+        }
+    }
+
+    fn value(&self, direction: &Vec3) -> f64 {
+        0.5 * self.p[0].value(direction) + 0.5 * self.p[1].value(direction)
     }
 }

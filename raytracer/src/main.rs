@@ -22,7 +22,7 @@ use material::{
     DiffuseLight,
 };
 use moving_sphere::MovingSphere;
-use pdf::{HittablePdf, Pdf};
+use pdf::{CosinePdf, HittablePdf, MixturePdf, Pdf};
 use rtweekend::random_double;
 use std::{
     fs::File,
@@ -83,9 +83,11 @@ fn ray_color(
         .unwrap()
         .scatter(&r, &rec, &mut albedo, &mut scattered, &mut pdf_val)
     {
-        let light_pdf = HittablePdf::new(lights.clone(), &rec.p);
-        scattered = Ray::new(rec.p, light_pdf.generate(), r.time());
-        pdf_val = light_pdf.value(&scattered.direction());
+        let p0 = Arc::new(HittablePdf::new(lights.clone(), &rec.p));
+        let p1 = Arc::new(CosinePdf::new(&rec.normal));
+        let mixture_pdf = MixturePdf::new(p0, p1);
+        scattered = Ray::new(rec.p, mixture_pdf.generate(), r.time());
+        pdf_val = mixture_pdf.value(&scattered.direction());
 
         emitted
             + Vec3::elemul(

@@ -9,6 +9,13 @@ pub fn write_color(
     i: usize,
     j: usize,
 ) {
+    // Clear NaNs
+    for i in 0..2 {
+        if color[i].is_nan() || color[i].is_infinite() {
+            color[i] = 0.;
+        }
+    }
+
     //Divide the color by the number of samples.
     let scale = 1. / samples_per_pixel as f64;
     color *= scale;

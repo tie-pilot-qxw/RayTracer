@@ -551,7 +551,7 @@ fn main() {
             world = BVH::new(&cornell_box(), 0., 0.);
             aspect_ratio = 1.;
             width = 600;
-            samples_per_pixel = 200;
+            samples_per_pixel = 1000;
             background = Color3::zero();
             lookfrom = Point3::new(278., 278., -800.);
             lookat = Point3::new(278., 278., 0.);

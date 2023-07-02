@@ -3,6 +3,7 @@ mod color;
 mod hittable;
 mod material;
 mod onb;
+mod pdf;
 mod ray;
 mod rtweekend;
 mod vec3;
@@ -21,6 +22,7 @@ use material::{
     DiffuseLight,
 };
 use moving_sphere::MovingSphere;
+use pdf::{CosinePdf, Pdf};
 use rtweekend::random_double;
 use std::{
     fs::File,
@@ -72,31 +74,17 @@ fn ray_color(
         .clone()
         .unwrap()
         .emitted(&r, &rec, rec.u, rec.v, &rec.p);
-    let mut pdf = 0.;
+    let mut pdf_val = 0.;
 
     if rec
         .mat_ptr
         .clone()
         .unwrap()
-        .scatter(&r, &rec, &mut albedo, &mut scattered, &mut pdf)
+        .scatter(&r, &rec, &mut albedo, &mut scattered, &mut pdf_val)
     {
-        let on_light = Point3::new(random_double(213., 343.), 554., random_double(227., 332.));
-        let mut to_light = on_light - rec.p;
-        let distance_squared = to_light.squared_length();
-        to_light = to_light.unit();
-
-        if to_light * rec.normal < 0. {
-            return emitted;
-        }
-
-        let light_area = (343. - 213.) * (332. - 227.);
-        let light_cosine = to_light.y().abs();
-        if light_cosine < 0.000001 {
-            return emitted;
-        }
-
-        pdf = distance_squared / (light_cosine * light_area);
-        scattered = Ray::new(rec.p, to_light, r.time());
+        let p = CosinePdf::new(&rec.normal);
+        scattered = Ray::new(rec.p, p.generate(), r.time());
+        pdf_val = p.value(&scattered.direction());
 
         emitted
             + Vec3::elemul(albedo, ray_color(scattered, world, background, depth - 1))
@@ -105,7 +93,7 @@ fn ray_color(
                     .clone()
                     .unwrap()
                     .scattering_pdf(&r, &rec, &scattered)
-                / pdf
+                / pdf_val
     } else {
         emitted
     }

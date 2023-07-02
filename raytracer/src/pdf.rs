@@ -1,11 +1,14 @@
+mod onb;
+
 use std::{f64::consts::PI, sync::Arc};
 
 use crate::{
     hittable::Hittable,
-    onb::Onb,
     rtweekend::{random_cosine_direction, random_double_unit},
     Point3, Vec3,
 };
+
+use self::onb::Onb;
 
 pub trait Pdf {
     fn value(&self, direction: &Vec3) -> f64;

@@ -2,7 +2,6 @@ mod camera;
 mod color;
 mod hittable;
 mod material;
-mod onb;
 mod pdf;
 mod ray;
 mod rtweekend;
@@ -19,10 +18,10 @@ use image::{ImageBuffer, RgbImage};
 use indicatif::{MultiProgress, ProgressBar};
 use material::{
     texture::{CheckerTexture, ImageTexture, NoiseTexture},
-    DiffuseLight,
+    DiffuseLight, ScatterRecord,
 };
 use moving_sphere::MovingSphere;
-use pdf::{CosinePdf, HittablePdf, MixturePdf, Pdf};
+use pdf::{HittablePdf, MixturePdf, Pdf};
 use rtweekend::random_double;
 use std::{
     fs::File,
@@ -53,7 +52,7 @@ fn is_ci() -> bool {
 
 fn ray_color(
     r: Ray,
-    world: Arc<dyn Hittable + Send + Sync>,
+    world: &Arc<dyn Hittable + Send + Sync>,
     lights: &Arc<dyn Hittable + Send + Sync>,
     background: Color3,
     depth: isize,
@@ -68,30 +67,29 @@ fn ray_color(
         return background;
     }
 
-    let mut scattered = Ray::new(Vec3::zero(), Vec3::zero(), 0.);
-    let mut albedo = Color3::zero();
+    let mut srec = ScatterRecord::new();
     let emitted = rec
         .mat_ptr
         .clone()
         .unwrap()
         .emitted(&r, &rec, rec.u, rec.v, &rec.p);
-    let mut pdf_val = 0.;
 
-    if rec
-        .mat_ptr
-        .clone()
-        .unwrap()
-        .scatter(&r, &rec, &mut albedo, &mut scattered, &mut pdf_val)
-    {
-        let p0 = Arc::new(HittablePdf::new(lights.clone(), &rec.p));
-        let p1 = Arc::new(CosinePdf::new(&rec.normal));
-        let mixture_pdf = MixturePdf::new(p0, p1);
-        scattered = Ray::new(rec.p, mixture_pdf.generate(), r.time());
-        pdf_val = mixture_pdf.value(&scattered.direction());
+    if rec.mat_ptr.clone().unwrap().scatter(&r, &rec, &mut srec) {
+        if srec.is_specular {
+            return Vec3::elemul(
+                srec.attenuation,
+                ray_color(srec.specular_ray, world, lights, background, depth - 1),
+            );
+        }
+        let light_ptr = Arc::new(HittablePdf::new(lights.clone(), &rec.p));
+        let mixture_pdf = MixturePdf::new(light_ptr, srec.pdf_ptr.unwrap());
+
+        let scattered = Ray::new(rec.p, mixture_pdf.generate(), r.time());
+        let pdf_val = mixture_pdf.value(&scattered.direction());
 
         emitted
             + Vec3::elemul(
-                albedo,
+                srec.attenuation,
                 ray_color(scattered, world, lights, background, depth - 1),
             ) * rec
                 .mat_ptr
@@ -291,26 +289,25 @@ fn cornell_box() -> HittableList {
         0.,
         555.,
         555.,
-        white.clone(),
+        white,
     )));
 
+    let aluminum = Arc::new(Metal::new(Color3::new(0.8, 0.85, 0.88), 0.0));
     let mut box1: Arc<dyn Hittable + Send + Sync> = Arc::new(Boxes::new(
         &Point3::zero(),
         &Point3::new(165., 330., 165.),
-        white.clone(),
+        aluminum,
     ));
     box1 = Arc::new(RotateY::new(box1, 15.));
     box1 = Arc::new(Translate::new(box1, Vec3::new(265., 0., 295.)));
     objects.add(box1);
 
-    let mut box2: Arc<dyn Hittable + Send + Sync> = Arc::new(Boxes::new(
-        &Point3::zero(),
-        &Point3::new(165., 165., 165.),
-        white,
-    ));
-    box2 = Arc::new(RotateY::new(box2, -18.));
-    box2 = Arc::new(Translate::new(box2, Vec3::new(130., 0., 65.)));
-    objects.add(box2);
+    let glass = Arc::new(Dielectric::new(1.5));
+    objects.add(Arc::new(Sphere::new(
+        Point3::new(190., 90., 190.),
+        90.,
+        glass,
+    )));
 
     objects
 }
@@ -600,7 +597,7 @@ fn main() {
     );
 
     samples_per_pixel = (samples_per_pixel / THREAD_NUM + 1) * THREAD_NUM;
-    let world = Arc::new(world);
+    let world: Arc<dyn Hittable + Send + Sync> = Arc::new(world);
     let lights: Arc<dyn Hittable + Send + Sync> = Arc::new(XzRect::new(
         213.,
         343.,
@@ -643,7 +640,7 @@ fn main() {
                         let u = (i as f64 + random_double_unit()) / (width - 1) as f64;
                         let v = (j as f64 + random_double_unit()) / (height - 1) as f64;
                         let r = camm.get_ray(u, v);
-                        *jter += ray_color(r, world_t.clone(), &lights_t, background, max_depth);
+                        *jter += ray_color(r, &world_t, &lights_t, background, max_depth);
                     }
                     bar.inc(1);
                 }

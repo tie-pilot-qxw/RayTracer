@@ -1,6 +1,6 @@
-use std::f64::consts::PI;
+use std::{f64::consts::PI, sync::Arc};
 
-use crate::{onb::Onb, rtweekend::random_cosine_direction, Vec3};
+use crate::{hittable::Hittable, onb::Onb, rtweekend::random_cosine_direction, Point3, Vec3};
 
 pub trait Pdf {
     fn value(&self, direction: &Vec3) -> f64;
@@ -12,6 +12,7 @@ pub struct CosinePdf {
 }
 
 impl CosinePdf {
+    #[allow(dead_code)]
     pub fn new(w: &Vec3) -> Self {
         let uvw = Onb::build_from_w(*w);
         Self { uvw }
@@ -30,5 +31,26 @@ impl Pdf for CosinePdf {
         } else {
             cosine / PI
         }
+    }
+}
+
+pub struct HittablePdf {
+    o: Point3,
+    ptr: Arc<dyn Hittable + Send + Sync>,
+}
+
+impl HittablePdf {
+    pub fn new(p: Arc<dyn Hittable + Send + Sync>, origin: &Point3) -> Self {
+        Self { o: *origin, ptr: p }
+    }
+}
+
+impl Pdf for HittablePdf {
+    fn generate(&self) -> Vec3 {
+        self.ptr.random(&self.o)
+    }
+
+    fn value(&self, direction: &Vec3) -> f64 {
+        self.ptr.pdf_value(&self.o, direction)
     }
 }

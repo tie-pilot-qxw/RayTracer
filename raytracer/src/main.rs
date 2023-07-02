@@ -22,7 +22,7 @@ use material::{
     DiffuseLight,
 };
 use moving_sphere::MovingSphere;
-use pdf::{CosinePdf, Pdf};
+use pdf::{HittablePdf, Pdf};
 use rtweekend::random_double;
 use std::{
     fs::File,
@@ -54,6 +54,7 @@ fn is_ci() -> bool {
 fn ray_color(
     r: Ray,
     world: Arc<dyn Hittable + Send + Sync>,
+    lights: &Arc<dyn Hittable + Send + Sync>,
     background: Color3,
     depth: isize,
 ) -> Color3 {
@@ -82,17 +83,19 @@ fn ray_color(
         .unwrap()
         .scatter(&r, &rec, &mut albedo, &mut scattered, &mut pdf_val)
     {
-        let p = CosinePdf::new(&rec.normal);
-        scattered = Ray::new(rec.p, p.generate(), r.time());
-        pdf_val = p.value(&scattered.direction());
+        let light_pdf = HittablePdf::new(lights.clone(), &rec.p);
+        scattered = Ray::new(rec.p, light_pdf.generate(), r.time());
+        pdf_val = light_pdf.value(&scattered.direction());
 
         emitted
-            + Vec3::elemul(albedo, ray_color(scattered, world, background, depth - 1))
-                * rec
-                    .mat_ptr
-                    .clone()
-                    .unwrap()
-                    .scattering_pdf(&r, &rec, &scattered)
+            + Vec3::elemul(
+                albedo,
+                ray_color(scattered, world, lights, background, depth - 1),
+            ) * rec
+                .mat_ptr
+                .clone()
+                .unwrap()
+                .scattering_pdf(&r, &rec, &scattered)
                 / pdf_val
     } else {
         emitted
@@ -596,6 +599,14 @@ fn main() {
 
     samples_per_pixel = (samples_per_pixel / THREAD_NUM + 1) * THREAD_NUM;
     let world = Arc::new(world);
+    let lights: Arc<dyn Hittable + Send + Sync> = Arc::new(XzRect::new(
+        213.,
+        343.,
+        227.,
+        332.,
+        554.,
+        Arc::new(Lambertian::new(Color3::zero())),
+    ));
 
     // Create image data
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());
@@ -615,6 +626,7 @@ fn main() {
     for _k in 0..THREAD_NUM {
         let camm = cam.clone();
         let world_t = world.clone();
+        let lights_t = lights.clone();
         let tx_k = tx.clone();
         let mut ans_t = ans.clone();
         let bar = bar_collection.add(if is_ci {
@@ -629,7 +641,7 @@ fn main() {
                         let u = (i as f64 + random_double_unit()) / (width - 1) as f64;
                         let v = (j as f64 + random_double_unit()) / (height - 1) as f64;
                         let r = camm.get_ray(u, v);
-                        *jter += ray_color(r, world_t.clone(), background, max_depth);
+                        *jter += ray_color(r, world_t.clone(), &lights_t, background, max_depth);
                     }
                     bar.inc(1);
                 }

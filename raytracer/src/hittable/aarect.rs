@@ -1,6 +1,6 @@
-use std::sync::Arc;
+use std::{f64::INFINITY, sync::Arc};
 
-use crate::{Point3, Vec3};
+use crate::{ray::Ray, rtweekend::random_double, Point3, Vec3};
 
 use super::{aabb::AABB, HitRecord, Hittable, Material};
 
@@ -123,6 +123,28 @@ impl Hittable for XzRect {
         rec.mat_ptr = Some(self.mp.clone());
         rec.p = r.at(t);
         true
+    }
+
+    fn pdf_value(&self, origin: &Point3, v: &Vec3) -> f64 {
+        let mut rec = HitRecord::new();
+        if !self.hit(&Ray::new(*origin, *v, 0.), 0.001, INFINITY, &mut rec) {
+            return 0.;
+        }
+
+        let area = (self.x1 - self.x0) * (self.z1 - self.z0);
+        let distance_squared = rec.t * rec.t * v.squared_length();
+        let cosine = (*v * rec.normal / v.length()).abs();
+
+        distance_squared / (cosine * area)
+    }
+
+    fn random(&self, origin: &Vec3) -> Vec3 {
+        let random_point = Point3::new(
+            random_double(self.x0, self.x1),
+            self.k,
+            random_double(self.z0, self.z1),
+        );
+        random_point - *origin
     }
 }
 

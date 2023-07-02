@@ -53,7 +53,7 @@ fn is_ci() -> bool {
 fn ray_color(
     r: Ray,
     world: &Arc<dyn Hittable + Send + Sync>,
-    lights: &Arc<dyn Hittable + Send + Sync>,
+    lights: &Arc<HittableList>,
     background: Color3,
     depth: isize,
 ) -> Color3 {
@@ -283,13 +283,20 @@ fn cornell_box() -> HittableList {
         555.,
         white.clone(),
     )));
-    objects.add(Arc::new(XyRect::new(0., 555., 0., 555., 555., white)));
+    objects.add(Arc::new(XyRect::new(
+        0.,
+        555.,
+        0.,
+        555.,
+        555.,
+        white.clone(),
+    )));
 
-    let aluminum = Arc::new(Metal::new(Color3::new(0.8, 0.85, 0.88), 0.0));
+    // let aluminum = Arc::new(Metal::new(Color3::new(0.8, 0.85, 0.88), 0.0));
     let mut box1: Arc<dyn Hittable + Send + Sync> = Arc::new(Boxes::new(
         &Point3::zero(),
         &Point3::new(165., 330., 165.),
-        aluminum,
+        white,
     ));
     box1 = Arc::new(RotateY::new(box1, 15.));
     box1 = Arc::new(Translate::new(box1, Vec3::new(265., 0., 295.)));
@@ -500,7 +507,7 @@ fn main() {
     let mut vfov = 40.;
     let mut aperture = 0.;
     let mut background = Color3::zero();
-    let mut lights: Arc<dyn Hittable + Send + Sync> = Arc::new(HittableList::new());
+    let mut lights = HittableList::new();
 
     match 6 {
         1 => {
@@ -549,19 +556,19 @@ fn main() {
             lookfrom = Point3::new(278., 278., -800.);
             lookat = Point3::new(278., 278., 0.);
             vfov = 40.;
-            // lights = Arc::new(XzRect::new(
-            //     213.,
-            //     343.,
-            //     227.,
-            //     332.,
-            //     554.,
-            //     Arc::new(Lambertian::new(Color3::zero())),
-            // ));
-            lights = Arc::new(Sphere::new(
+            lights.add(Arc::new(XzRect::new(
+                213.,
+                343.,
+                227.,
+                332.,
+                554.,
+                Arc::new(Lambertian::new(Color3::zero())),
+            )));
+            lights.add(Arc::new(Sphere::new(
                 Point3::new(190., 90., 190.),
                 90.,
                 Arc::new(Lambertian::new(Color3::zero())),
-            ));
+            )));
         }
         7 => {
             world = BVH::new(&cornell_smoke(), 0., 0.);
@@ -581,14 +588,14 @@ fn main() {
             lookfrom = Point3::new(478., 278., -600.);
             lookat = Point3::new(278., 278., 0.);
             vfov = 40.;
-            lights = Arc::new(XzRect::new(
+            lights.add(Arc::new(XzRect::new(
                 123.,
                 423.,
                 147.,
                 412.,
                 554.,
                 Arc::new(Lambertian::new(Color3::zero())),
-            ));
+            )));
         }
         _ => {
             world = BVH::new(&HittableList::new(), 0., 0.);
@@ -615,6 +622,7 @@ fn main() {
 
     samples_per_pixel = (samples_per_pixel / THREAD_NUM + 1) * THREAD_NUM;
     let world: Arc<dyn Hittable + Send + Sync> = Arc::new(world);
+    let lights = Arc::new(lights);
 
     // Create image data
     let mut img: RgbImage = ImageBuffer::new(width.try_into().unwrap(), height.try_into().unwrap());

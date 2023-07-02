@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::{
     hittable::aabb::AABB,
     hittable::{HitRecord, Hittable},
+    rtweekend::random_int,
     Point3,
 };
 
@@ -60,5 +61,19 @@ impl Hittable for HittableList {
         }
 
         true
+    }
+
+    fn pdf_value(&self, o: &Point3, v: &crate::Vec3) -> f64 {
+        let weight = 1. / self.objects.len() as f64;
+        let mut sum = 0.;
+        for object in &self.objects {
+            sum += weight * object.pdf_value(o, v);
+        }
+        sum
+    }
+
+    fn random(&self, o: &crate::Vec3) -> crate::Vec3 {
+        let int_size: isize = self.objects.len().try_into().unwrap();
+        self.objects[random_int(0, int_size - 1) as usize].random(o)
     }
 }

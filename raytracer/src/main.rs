@@ -50,7 +50,7 @@ fn is_ci() -> bool {
 }
 
 fn ray_color(
-    r: Ray,
+    r: &Ray,
     world: Arc<dyn Hittable + Send + Sync>,
     background: Color3,
     depth: isize,
@@ -78,7 +78,7 @@ fn ray_color(
         emitted
             + Vec3::elemul(
                 attenuation,
-                ray_color(scattered, world, background, depth - 1),
+                ray_color(&scattered, world, background, depth - 1),
             )
     } else {
         emitted
@@ -464,7 +464,7 @@ fn final_scene() -> HittableList {
 }
 
 fn main() {
-    const THREAD_NUM: usize = 31;
+    const THREAD_NUM: usize = 20;
 
     // get environment variable CI, which is true for GitHub Actions
     let is_ci = is_ci();
@@ -549,7 +549,7 @@ fn main() {
             world = BVH::new(&final_scene(), 0., 1.);
             aspect_ratio = 1.;
             width = 800;
-            samples_per_pixel = 100;
+            samples_per_pixel = 10000;
             background = Color3::zero();
             lookfrom = Point3::new(478., 278., -600.);
             lookat = Point3::new(278., 278., 0.);
@@ -623,7 +623,7 @@ fn main() {
                         let u = (i as f64 + random_double_unit()) / (width - 1) as f64;
                         let v = (j as f64 + random_double_unit()) / (height - 1) as f64;
                         let r = camm.get_ray(u, v);
-                        *jter += ray_color(r, world_t.clone(), background, max_depth);
+                        *jter += ray_color(&r, world_t.clone(), background, max_depth);
                     }
                     bar.inc(1);
                 }
